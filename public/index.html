@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Книга Пам'яті — Герої, які живуть вічно</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #0a0a0c;
+  --bg-card: #141418;
+  --bg-surface: #1a1a20;
+  --gold: #c9a84c;
+  --gold-dim: #8a7233;
+  --gold-glow: rgba(201, 168, 76, 0.15);
+  --text-primary: #e8e4dc;
+  --text-muted: #9a958a;
+  --text-dim: #5a5650;
+  --border: rgba(201, 168, 76, 0.12);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Montserrat', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════ ETERNAL FLAME PARTICLE BG ═══════ */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* ═══════ LANDING / HERO SECTION ═══════ */
+.landing {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.landing::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 40%;
+  background: linear-gradient(to top, var(--bg-deep), transparent);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.landing-header {
+  text-align: center;
+  z-index: 3;
+  padding: 0 2rem;
+  animation: fadeInUp 2s ease-out;
+}
+
+.landing-header .trident {
+  font-size: 3rem;
+  color: var(--gold);
+  margin-bottom: 1rem;
+  display: block;
+  filter: drop-shadow(0 0 20px rgba(201, 168, 76, 0.3));
+}
+
+.landing-header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+
+.landing-header h1 span {
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.landing-header .subtitle {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--text-muted);
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  margin-bottom: 2.5rem;
+}
+
+/* ═══════ SEARCH ═══════ */
+.search-container {
+  position: relative;
+  z-index: 3;
+  width: min(90%, 520px);
+  margin: 0 auto 3rem;
+  animation: fadeInUp 2s ease-out 0.4s both;
+}
+
+.search-box {
+  width: 100%;
+  padding: 1rem 1.5rem 1rem 3.2rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 60px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.4s ease;
+  backdrop-filter: blur(12px);
+}
+
+.search-box::placeholder { color: var(--text-dim); }
+.search-box:focus {
+  border-color: var(--gold-dim);
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 0 40px rgba(201,168,76,0.08);
+}
+
+.search-icon {
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0; right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: none;
+  z-index: 100;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.search-results.active { display: block; }
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: rgba(201,168,76,0.06); }
+
+.search-result-item img {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gold-dim);
+}
+
+.search-result-item .info h4 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.search-result-item .info p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ═══════ FLOATING PHOTOS GALLERY ═══════ */
+.photos-perspective {
+  position: relative;
+  z-index: 1;
+  perspective: 1200px;
+  padding: 0 2rem 6rem;
+  animation: fadeInUp 2s ease-out 0.8s both;
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+  transform-style: preserve-3d;
+}
+
+.photo-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  aspect-ratio: 3/4;
+  border: 1px solid rgba(201,168,76,0.08);
+}
+
+.photo-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10,10,12,0.85) 0%, rgba(10,10,12,0.1) 50%, transparent 100%);
+  transition: opacity 0.4s;
+}
+
+.photo-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  border-color: var(--gold-dim);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px var(--gold-glow);
+}
+
+.photo-card:hover::after {
+  background: linear-gradient(to top, rgba(10,10,12,0.9) 0%, rgba(10,10,12,0.2) 60%, transparent 100%);
+}
+
+.photo-card img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.photo-card:hover img { transform: scale(1.08); }
+
+.photo-card .card-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 1rem;
+  z-index: 2;
+  transform: translateY(6px);
+  opacity: 0;
+  transition: all 0.4s ease;
+}
+
+.photo-card:hover .card-info { transform: translateY(0); opacity: 1; }
+
+.photo-card .card-info h3 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.photo-card .card-info p {
+  font-size: 0.72rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+
+/* Depth rows — cards further back are smaller/dimmer */
+.photo-card.depth-1 { opacity: 0.95; }
+.photo-card.depth-2 { opacity: 0.75; transform: scale(0.95); filter: brightness(0.8); }
+.photo-card.depth-3 { opacity: 0.55; transform: scale(0.9); filter: brightness(0.6) blur(1px); }
+
+.photo-card.depth-2:hover,
+.photo-card.depth-3:hover {
+  opacity: 1; filter: none; transform: translateY(-8px) scale(1.03);
+}
+
+/* ═══════ SCROLL CTA ═══════ */
+.scroll-hint {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  text-align: center;
+  animation: fadeInUp 2s ease-out 1.2s both;
+}
+
+.scroll-hint span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.scroll-hint .arrow {
+  display: block;
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--gold-dim), transparent);
+  margin: 0 auto;
+  animation: pulse-down 2s ease-in-out infinite;
+}
+
+/* ═══════ FILTER BAR ═══════ */
+.filter-bar {
+  position: relative;
+  z-index: 2;
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+  padding: 0 2rem;
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  flex-wrap: wrap;
+  animation: fadeInUp 1s ease-out 1s both;
+}
+
+.filter-bar label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.filter-bar select {
+  padding: 0.55rem 2rem 0.55rem 0.9rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.3s;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239a958a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+}
+
+.filter-bar select:hover,
+.filter-bar select:focus {
+  border-color: var(--gold-dim);
+}
+
+.filter-bar select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.filter-count {
+  font-size: 0.78rem;
+  color: var(--gold);
+  margin-left: auto;
+}
+
+.filter-reset {
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: none;
+}
+
+.filter-reset.active { display: inline-block; }
+.filter-reset:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+/* ═══════ COUNTER BAR ═══════ */
+.counter-bar {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  padding: 3rem 2rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4rem;
+  position: relative;
+  z-index: 1;
+}
+
+.counter-item {
+  text-align: center;
+}
+
+.counter-item .number {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 300;
+  color: var(--gold);
+  display: block;
+}
+
+.counter-item .label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+
+/* ═══════ HERO PROFILE PAGE (OVERLAY) ═══════ */
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(5,5,8,0.92);
+  backdrop-filter: blur(20px);
+  overflow-y: auto;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.profile-overlay.active { display: block; opacity: 1; }
+
+.profile-close {
+  position: fixed;
+  top: 1.5rem; right: 1.5rem;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: rgba(20,20,24,0.8);
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  backdrop-filter: blur(12px);
+}
+
+.profile-close:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+.profile-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 4rem 2rem 6rem;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.profile-hero {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+}
+
+.profile-photo {
+  width: 200px;
+  height: 260px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid var(--gold-dim);
+  flex-shrink: 0;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.profile-details h2 {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+
+.profile-details .rank {
+  font-size: 0.85rem;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+}
+
+.profile-details .dates {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.profile-details .unit {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.profile-details .awards {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.award-badge {
+  padding: 0.3rem 0.8rem;
+  background: var(--gold-glow);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 20px;
+  font-size: 0.72rem;
+  color: var(--gold);
+  letter-spacing: 0.03em;
+}
+
+/* Story section */
+.profile-section {
+  margin-bottom: 3rem;
+}
+
+.profile-section h3 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: var(--gold);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-section .story {
+  font-size: 0.95rem;
+  line-height: 1.9;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.profile-section .story p { margin-bottom: 1rem; }
+
+/* Photo gallery in profile */
+.profile-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.profile-gallery img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.profile-gallery img:hover {
+  transform: scale(1.04);
+  border-color: var(--gold-dim);
+}
+
+/* Audio/video section */
+.media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.media-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  background: var(--bg-surface);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.media-item:hover {
+  background: rgba(201,168,76,0.05);
+  border-color: var(--border);
+}
+
+.media-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--gold-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.media-info h4 {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 400;
+  margin-bottom: 2px;
+}
+
+.media-info p {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* Candle */
+.candle-section {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.candle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.9rem 2rem;
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  border-radius: 40px;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.4s;
+}
+
+.candle-btn:hover {
+  background: var(--gold-glow);
+  box-shadow: 0 0 30px rgba(201,168,76,0.15);
+}
+
+.candle-btn .flame { font-size: 1.3rem; }
+
+.candle-count {
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* ═══════ FOOTER ═══════ */
+footer {
+  text-align: center;
+  padding: 3rem 2rem;
+  border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
+}
+
+footer p {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+footer .flag {
+  display: inline-block;
+  width: 30px;
+  height: 20px;
+  background: linear-gradient(to bottom, #005BBB 50%, #FFD500 50%);
+  border-radius: 3px;
+  margin-bottom: 1rem;
+}
+
+/* ═══════ ANIMATIONS ═══════ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-down {
+  0%, 100% { opacity: 0.3; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.3); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* Staggered card animations */
+.photo-card { animation: fadeInUp 0.8s ease-out both; }
+.photo-card:nth-child(1) { animation-delay: 0.1s; }
+.photo-card:nth-child(2) { animation-delay: 0.15s; }
+.photo-card:nth-child(3) { animation-delay: 0.2s; }
+.photo-card:nth-child(4) { animation-delay: 0.25s; }
+.photo-card:nth-child(5) { animation-delay: 0.3s; }
+.photo-card:nth-child(6) { animation-delay: 0.35s; }
+.photo-card:nth-child(7) { animation-delay: 0.4s; }
+.photo-card:nth-child(8) { animation-delay: 0.45s; }
+.photo-card:nth-child(9) { animation-delay: 0.5s; }
+.photo-card:nth-child(10) { animation-delay: 0.55s; }
+.photo-card:nth-child(11) { animation-delay: 0.6s; }
+.photo-card:nth-child(12) { animation-delay: 0.65s; }
+
+/* ═══════ RESPONSIVE ═══════ */
+@media (max-width: 768px) {
+  .profile-hero { flex-direction: column; align-items: center; text-align: center; }
+  .profile-photo { width: 160px; height: 210px; }
+  .profile-details .awards { justify-content: center; }
+  .counter-bar { gap: 2rem; flex-wrap: wrap; }
+  .photos-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+
+<!-- ═══════ LANDING ═══════ -->
+<section class="landing">
+  <div class="landing-header">
+    <span class="trident">🇺🇦</span>
+    <h1>Книга <span>Пам'яті</span></h1>
+    <p class="subtitle">Герої не вмирають. Вони живуть у нашій пам'яті назавжди.</p>
+  </div>
+
+  <div class="search-container">
+    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" class="search-box" id="searchInput" placeholder="Пошук за прізвищем героя..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Гортай вниз</span>
+    <span class="arrow"></span>
+  </div>
+</section>
+
+<!-- ═══════ FILTER BAR ═══════ -->
+<div class="filter-bar" id="filterBar">
+  <label>Фільтр:</label>
+  <select id="filterBrigade" onchange="applyFilters()">
+    <option value="">Всі бригади</option>
+  </select>
+  <select id="filterBattalion" onchange="applyFilters()">
+    <option value="">Всі батальйони</option>
+  </select>
+  <select id="filterCompany" onchange="applyFilters()">
+    <option value="">Всі роти</option>
+  </select>
+  <button class="filter-reset" id="filterReset" onclick="resetFilters()">Скинути фільтри</button>
+  <span class="filter-count" id="filterCount"></span>
+</div>
+
+<!-- ═══════ PHOTO GALLERY ═══════ -->
+<section class="photos-perspective" id="gallery">
+  <div class="photos-grid" id="photosGrid"></div>
+</section>
+
+<!-- ═══════ COUNTER ═══════ -->
+<div class="counter-bar">
+  <div class="counter-item">
+    <span class="number" id="counterHeroes">0</span>
+    <span class="label">Героїв у базі</span>
+  </div>
+  <div class="counter-item">
+    <span class="number" id="counterCandles">0</span>
+    <span class="label">Запалених свічок</span>
+  </div>
+  <div class="counter-item">
+    <span class="number" id="counterStories">0</span>
+    <span class="label">Записаних історій</span>
+  </div>
+</div>
+
+<!-- ═══════ FOOTER ═══════ -->
+<footer>
+  <div class="flag"></div>
+  <p>Вічна пам'ять захисникам і захисницям України</p>
+</footer>
+
+<!-- ═══════ PROFILE OVERLAY ═══════ -->
+<div class="profile-overlay" id="profileOverlay">
+  <button class="profile-close" id="profileClose">&times;</button>
+  <div class="profile-content" id="profileContent"></div>
+</div>
+
+<script>
+// ═══════ DATA FROM API ═══════
+let heroes = [];
+
+async function loadHeroes() {
+  try {
+    const res = await fetch('/api/heroes?limit=500');
+    const data = await res.json();
+    heroes = data.heroes;
+    allHeroes = [...heroes]; // зберегти повний список для фільтрації
+    renderGrid();
+    loadFilterOptions(); // завантажити варіанти фільтрів
+    // Fallback якщо API порожнє — показати повідомлення
+    if (heroes.length === 0) {
+      document.getElementById('photosGrid').innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:3rem;grid-column:1/-1;">Поки немає записів. Додайте героїв через <a href="/admin" style="color:var(--gold)">адмін-панель</a>.</p>';
+    }
+  } catch(e) {
+    console.error('Помилка завантаження:', e);
+    // Fallback на демо-дані
+    heroes = demoHeroes;
+    allHeroes = [...heroes];
+    renderGrid();
+  }
+}
+
+// Якщо API недоступне, використовуємо демо-дані
+const demoHeroes = [
+  {
+    id: 1,
+    name: "Дмитро Коцюбайло",
+    callsign: "Да Вінчі",
+    rank: "Лейтенант, Герой України",
+    born: "27.02.1995",
+    fallen: "07.03.2023",
+    unit: "1-ша окрема штурмова бригада",
+    city: "Київ",
+    awards: ["Герой України", "Орден Богдана Хмельницького"],
+    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&crop=face",
+    gallery: [
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop",
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop",
+    ],
+    story: `<p>Один із наймолодших командирів добровольчих підрозділів під час війни на Донбасі. Став символом незламності українського духу.</p><p>Вже у 18 років пішов добровольцем на фронт. Пройшов найгарячіші точки — Піски, Авдіївку, Бахмут. За мужність та героїзм отримав звання Героя України у 24 роки.</p><p>Був відомий своєю лисичкою Мічею, яка стала неофіційним символом української стійкості. Його хоробрість та відданість надихали тисячі людей.</p>`,
+    media: [
+      { type: "audio", title: "Голосове повідомлення рідним", duration: "2:14" },
+      { type: "video", title: "Інтерв'ю для документального фільму", duration: "12:30" },
+      { type: "audio", title: "Останній виступ перед бригадою", duration: "5:47" },
+    ],
+    candles: 24831
+  },
+  {
+    id: 2,
+    name: "Олена Кравченко",
+    callsign: "Берегиня",
+    rank: "Старший лейтенант, бойова медикиня",
+    born: "15.08.1990",
+    fallen: "12.05.2023",
+    unit: "3-тя окрема штурмова бригада",
+    city: "Львів",
+    awards: ["Орден «За мужність» III ступеня"],
+    photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face",
+    gallery: [
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop",
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop",
+    ],
+    story: `<p>Олена мріяла стати лікаркою з дитинства. Закінчила Львівський медичний університет із відзнакою. Коли почалося повномасштабне вторгнення, одразу пішла добровольцем.</p><p>На передовій врятувала десятки життів, часто ризикуючи власним. Побратими називали її Берегинею — бо вірили: поки вона поруч, все буде добре.</p><p>Загинула евакуюючи пораненого під мінометним обстрілом. Посмертно нагороджена Орденом «За мужність».</p>`,
+    media: [
+      { type: "audio", title: "Голосове з передової", duration: "1:32" },
+      { type: "video", title: "Привітання для мами на 8 березня", duration: "3:15" },
+    ],
+    candles: 18254
+  },
+  {
+    id: 3,
+    name: "Андрій Шевченко",
+    callsign: "Карпатія",
+    rank: "Сержант",
+    born: "03.11.1988",
+    fallen: "21.09.2023",
+    unit: "10-та окрема гірсько-штурмова бригада",
+    city: "Івано-Франківськ",
+    awards: ["Орден Богдана Хмельницького III ступеня"],
+    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=500&fit=crop&crop=face",
+    gallery: [
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop",
+    ],
+    story: `<p>Андрій був учителем історії у маленькій школі в Карпатах. Любив гори, походи та дітей. Учні називали його найкращим вчителем.</p><p>24 лютого 2022 року одразу записався до ТрО. Потім пройшов підготовку і потрапив у гірсько-штурмову бригаду — бо гори були його стихією.</p><p>Загинув обороняючи позицію на Бахмутському напрямку. Його учні щороку збираються в день його народження та запалюють свічки.</p>`,
+    media: [
+      { type: "audio", title: "Голосове для учнів", duration: "4:20" },
+    ],
+    candles: 12340
+  },
+  {
+    id: 4,
+    name: "Максим Петренко",
+    callsign: "Док",
+    rank: "Капітан",
+    born: "22.06.1985",
+    fallen: "15.01.2024",
+    unit: "Окремий загін спеціального призначення",
+    city: "Одеса",
+    awards: ["Герой України", "Орден «За мужність» I ступеня"],
+    photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=500&fit=crop&crop=face",
+    gallery: [
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop",
+    ],
+    story: `<p>Максим — хірург за освітою, спецпризначенець за покликанням. Одесит з гострим гумором, який навіть у найтемніші часи знаходив слова підтримки для побратимів.</p><p>Провів десятки успішних спецоперацій. Отримав поранення, повернувся у стрій. Казав: «Поки є кого захищати — є за що боротись».</p>`,
+    media: [
+      { type: "video", title: "Звернення до одеситів", duration: "6:10" },
+      { type: "audio", title: "Останнє голосове дружині", duration: "3:45" },
+    ],
+    candles: 31205
+  },
+  {
+    id: 5,
+    name: "Ірина Волошина",
+    callsign: "Відьма",
+    rank: "Старший солдат, снайперка",
+    born: "09.04.1992",
+    fallen: "30.07.2023",
+    unit: "Окрема механізована бригада",
+    city: "Харків",
+    awards: ["Орден «За мужність» II ступеня"],
+    photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=500&fit=crop&crop=face",
+    gallery: [
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop",
+    ],
+    story: `<p>Ірина була чемпіонкою України з біатлону. Коли ворог прийшов на її землю, обміняла спортивну гвинтівку на бойову.</p><p>На передовій здобула позивний «Відьма» — за неймовірну точність і здатність залишатися невидимою. Захищала Харківщину від перших днів вторгнення.</p>`,
+    media: [
+      { type: "audio", title: "Голосове для сестри", duration: "2:55" },
+    ],
+    candles: 15780
+  },
+  {
+    id: 6,
+    name: "Богдан Лисенко",
+    callsign: "Хімік",
+    rank: "Молодший лейтенант",
+    born: "17.12.1999",
+    fallen: "02.11.2023",
+    unit: "72-га окрема механізована бригада",
+    city: "Запоріжжя",
+    awards: ["Орден «За мужність» III ступеня"],
+    photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=500&fit=crop&crop=face",
+    gallery: [],
+    story: `<p>Богдан мав 22 роки, коли почалося повномасштабне вторгнення. Студент хімічного факультету — звідси й позивний.</p><p>Мріяв після перемоги повернутися до науки. Писав наукові статті навіть у бліндажі. Загинув під час контрнаступу на Запорізькому напрямку.</p>`,
+    media: [],
+    candles: 8920
+  },
+  {
+    id: 7,
+    name: "Василь Гончаренко",
+    callsign: "Батько",
+    rank: "Старший сержант",
+    born: "05.03.1975",
+    fallen: "18.04.2023",
+    unit: "Бригада Національної гвардії",
+    city: "Вінниця",
+    awards: ["Медаль «За військову службу Україні»"],
+    photo: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=500&fit=crop&crop=face",
+    gallery: [],
+    story: `<p>Василю було 47 років — найстарший у підрозділі. Молоді хлопці називали його «Батько» — і це було не просто прізвисько.</p><p>Він справді піклувався про кожного як про рідного. Колишній тренер з боксу, він навчав молодих бійців не лише воювати, а й вірити в себе.</p>`,
+    media: [
+      { type: "video", title: "Привітання онуку з днем народження", duration: "1:58" },
+    ],
+    candles: 10540
+  },
+  {
+    id: 8,
+    name: "Тарас Мельник",
+    callsign: "Кобзар",
+    rank: "Солдат",
+    born: "14.07.1996",
+    fallen: "25.12.2023",
+    unit: "93-тя окрема механізована бригада «Холодний Яр»",
+    city: "Черкаси",
+    awards: ["Орден «За мужність» III ступеня"],
+    photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=500&fit=crop&crop=face",
+    gallery: [],
+    story: `<p>Тарас був музикантом — грав на бандурі та співав. Виступав з народним ансамблем по всій Україні. Друзі казали: його голос міг зупинити час.</p><p>На фронті став душею підрозділу. Навіть у найтяжчі моменти діставав бандуру і співав побратимам. «Ще не вмерла Україна» у його виконанні чули всі сусідні позиції.</p>`,
+    media: [
+      { type: "audio", title: "Пісня «Ой у лузі червона калина» з окопу", duration: "4:12" },
+      { type: "audio", title: "Голосове для мами", duration: "1:40" },
+    ],
+    candles: 19630
+  },
+  {
+    id: 9,
+    name: "Катерина Бондаренко",
+    callsign: "Зірка",
+    rank: "Солдатка, оператор БПЛА",
+    born: "28.01.1994",
+    fallen: "11.08.2023",
+    unit: "Аеророзвідувальний підрозділ",
+    city: "Дніпро",
+    awards: ["Медаль «Захиснику Вітчизни»"],
+    photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop&crop=face",
+    gallery: [],
+    story: `<p>Катерина була IT-спеціалісткою у великій компанії. Коли почалося вторгнення, пішла до аеророзвідки — її технічні навички стали безцінними.</p><p>Освоїла пілотування дронів за лічені тижні. Її розвідані допомогли врятувати сотні життів. Загинула від ворожого удару по позиції управління БПЛА.</p>`,
+    media: [
+      { type: "video", title: "Відео-щоденник з передової", duration: "8:22" },
+    ],
+    candles: 14280
+  },
+  {
+    id: 10,
+    name: "Олександр Ковальчук",
+    callsign: "Сталь",
+    rank: "Майор",
+    born: "11.09.1982",
+    fallen: "03.02.2024",
+    unit: "24-та окрема механізована бригада",
+    city: "Полтава",
+    awards: ["Герой України", "Орден Богдана Хмельницького I ступеня"],
+    photo: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&h=500&fit=crop&crop=face",
+    gallery: [],
+    story: `<p>Олександр — кадровий офіцер, який служив в армії з 2004 року. Пройшов АТО, ООС, і з першого дня повномасштабного вторгнення був на передовій.</p><p>Командував батальйоном, який тримав одну з найскладніших ділянок фронту. Його тактична майстерність врятувала підрозділ від оточення декілька разів. Загинув від снайперського пострілу, прикриваючи відхід підрозділу.</p>`,
+    media: [
+      { type: "audio", title: "Звернення до особового складу", duration: "7:15" },
+      { type: "video", title: "Інтерв'ю для військового каналу", duration: "15:40" },
+    ],
+    candles: 27650
+  },
+  {
+    id: 11,
+    name: "Микола Савченко",
+    callsign: "Дід",
+    rank: "Головний сержант",
+    born: "30.05.1970",
+    fallen: "09.06.2023",
+    unit: "Окрема бригада ТрО",
+    city: "Чернігів",
+    awards: ["Орден «За мужність» II ступеня"],
+    photo: "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=400&h=500&fit=crop&crop=face",
+    gallery: [],
+    story: `<p>Миколі було 52 — але він дав фору будь-якому двадцятирічному. Ветеран-афганець, який знав ціну миру як ніхто інший.</p><p>Коли почалося вторгнення, навіть не вагався. Прийшов у військкомат і сказав: «Я вже одну війну пережив. Ця — остання. І ми її виграємо».</p>`,
+    media: [],
+    candles: 11890
+  },
+  {
+    id: 12,
+    name: "Софія Кириленко",
+    callsign: "Янгол",
+    rank: "Молодший сержант, парамедикиня",
+    born: "20.10.1997",
+    fallen: "14.10.2023",
+    unit: "Десантно-штурмова бригада",
+    city: "Миколаїв",
+    awards: ["Орден «За мужність» III ступеня"],
+    photo: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=500&fit=crop&crop=face",
+    gallery: [],
+    story: `<p>Софія хотіла бути ветеринаркою — обожнювала тварин. Але війна змінила плани. Пройшла курси тактичної медицини і пішла на фронт.</p><p>На передовій її називали «Янгол» — бо з'являлася з нізвідки саме тоді, коли допомога була найпотрібніша. Загинула в день свого дня народження, рятуючи побратима.</p>`,
+    media: [
+      { type: "audio", title: "Голосове для найкращої подруги", duration: "3:08" },
+    ],
+    candles: 16430
+  }
+];
+
+// ═══════ RENDER PHOTO GRID ═══════
+function renderGrid() {
+const grid = document.getElementById('photosGrid');
+grid.innerHTML = '';
+
+if (heroes.length === 0 && (document.getElementById('filterBrigade').value || document.getElementById('filterBattalion').value || document.getElementById('filterCompany').value)) {
+  grid.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:3rem;grid-column:1/-1;">За обраними фільтрами героїв не знайдено</p>';
+  return;
+}
+
+heroes.forEach((hero, i) => {
+  const depth = i < 5 ? 'depth-1' : i < 9 ? 'depth-2' : 'depth-3';
+  const card = document.createElement('div');
+  card.className = `photo-card ${depth}`;
+  const photoSrc = hero.photo || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260" fill="%23141418"><rect width="200" height="260"/><text x="100" y="130" text-anchor="middle" font-family="serif" font-size="50" fill="%23c9a84c">🕯</text></svg>');
+  const unitLabel = hero.brigade || hero.unit || '';
+  card.innerHTML = `
+    <img src="${photoSrc}" alt="${hero.name}" loading="lazy">
+    <div class="card-info">
+      <h3>${hero.name}</h3>
+      <p>${hero.callsign ? '«' + hero.callsign + '»' : ''}${unitLabel ? (hero.callsign ? ' · ' : '') + unitLabel : ''}</p>
+    </div>
+  `;
+  card.addEventListener('click', () => openProfile(hero.id));
+  grid.appendChild(card);
+});
+} // end renderGrid
+
+// ═══════ SEARCH (via API) ═══════
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+
+searchInput.addEventListener('input', async (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  if (q.length < 2) { searchResults.classList.remove('active'); return; }
+
+  let matches;
+  try {
+    const res = await fetch(`/api/heroes/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    matches = data.heroes;
+  } catch(err) {
+    // Fallback: пошук локально
+    matches = heroes.filter(h =>
+      h.name.toLowerCase().includes(q) ||
+      (h.callsign || '').toLowerCase().includes(q) ||
+      (h.city || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (matches.length === 0) {
+    searchResults.innerHTML = `<div style="padding: 1.2rem; text-align: center; color: var(--text-dim); font-size: 0.85rem;">Нічого не знайдено</div>`;
+  } else {
+    searchResults.innerHTML = matches.map(h => `
+      <div class="search-result-item" data-id="${h.id}">
+        <img src="${h.photo}" alt="${h.name}">
+        <div class="info">
+          <h4>${h.name} «${h.callsign}»</h4>
+          <p>${h.rank} · ${h.city}</p>
+        </div>
+      </div>
+    `).join('');
+
+    searchResults.querySelectorAll('.search-result-item').forEach(item => {
+      item.addEventListener('click', () => {
+        openProfile(parseInt(item.dataset.id));
+        searchResults.classList.remove('active');
+        searchInput.value = '';
+      });
+    });
+  }
+  searchResults.classList.add('active');
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-container')) searchResults.classList.remove('active');
+});
+
+// ═══════ PROFILE OVERLAY ═══════
+const overlay = document.getElementById('profileOverlay');
+const profileContent = document.getElementById('profileContent');
+
+function openProfile(heroId) {
+  // Спочатку показати з локальних даних, потім довантажити з API
+  const localHero = heroes.find(h => h.id === heroId);
+  if (localHero) renderProfile(localHero);
+
+  fetch(`/api/heroes/${heroId}`)
+    .then(r => r.json())
+    .then(hero => renderProfile(hero))
+    .catch(() => { /* вже показали локальну версію */ });
+}
+
+function renderProfile(hero) {
+  // Будуємо HTML для медіа. Раніше тут показували лише назву з іконкою,
+  // тому загружені файли неможливо було послухати/подивитись. Тепер для
+  // кожного запису рендеримо реальний <audio>/<video> з нативними контролами.
+  const mediaHTML = (hero.media && hero.media.length > 0) ? `
+    <div class="profile-section">
+      <h3>Голос та відео</h3>
+      <div class="media-list">
+        ${hero.media.map(m => {
+          const src = m.filename || m.src || '';
+          const titleSafe = (m.title || (m.type === 'audio' ? 'Аудіозапис' : 'Відеозапис')).replace(/</g, '&lt;');
+          const meta = (m.type === 'audio' ? 'Аудіозапис' : 'Відеозапис') + (m.duration ? ' · ' + m.duration : '');
+          if (m.type === 'audio') {
+            return `
+              <div class="media-item media-item--player">
+                <div class="media-icon">♪</div>
+                <div class="media-info" style="flex:1">
+                  <h4>${titleSafe}</h4>
+                  <p>${meta}</p>
+                  ${src ? `<audio controls preload="metadata" src="${src}" style="width:100%;margin-top:.5rem"></audio>` : ''}
+                </div>
+              </div>`;
+          }
+          return `
+            <div class="media-item media-item--player" style="flex-direction:column;align-items:stretch">
+              <div style="display:flex;align-items:center;gap:1rem">
+                <div class="media-icon">▶</div>
+                <div class="media-info">
+                  <h4>${titleSafe}</h4>
+                  <p>${meta}</p>
+                </div>
+              </div>
+              ${src ? `<video controls preload="metadata" src="${src}" style="width:100%;margin-top:.6rem;border-radius:10px;background:#000;max-height:420px"></video>` : ''}
+            </div>`;
+        }).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  // Галерея: кожне фото клікабельне і відкриває збільшене у новій вкладці.
+  // data-full зберігає URL — обробник навісимо нижче, у renderProfile.
+  const galleryHTML = (hero.gallery && hero.gallery.length > 0) ? `
+    <div class="profile-section">
+      <h3>Світлини</h3>
+      <div class="profile-gallery">
+        ${hero.gallery.map(g => {
+          const src = g.filename || g;
+          return `<img src="${src}" data-full="${src}" alt="Фото" loading="lazy" title="Натисніть, щоб відкрити у новій вкладці">`;
+        }).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  profileContent.innerHTML = `
+    <div class="profile-hero">
+      <img class="profile-photo" src="${hero.photo}" alt="${hero.name}">
+      <div class="profile-details">
+        <h2>${hero.name}</h2>
+        <div class="rank">«${hero.callsign || ''}» · ${hero.rank || ''}</div>
+        <div class="dates">${hero.born || ''} — ${hero.fallen || ''}</div>
+        <div class="unit">${[hero.brigade, hero.battalion, hero.company].filter(Boolean).join(' → ') || hero.unit || ''} · ${hero.city || ''}</div>
+        <div class="awards">
+          ${(hero.awards || []).map(a => `<span class="award-badge">${a.title || a}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <h3>Історія</h3>
+      <div class="story">${hero.story}</div>
+    </div>
+
+    ${galleryHTML}
+    ${mediaHTML}
+
+    <div class="candle-section">
+      <button class="candle-btn" onclick="lightCandle(this, ${hero.id})">
+        <span class="flame">🕯</span> Запалити свічку пам'яті
+      </button>
+      <div class="candle-count" id="candle-${hero.id}">Запалено свічок: ${hero.candles.toLocaleString('uk-UA')}</div>
+    </div>
+  `;
+
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  // Клік по фото в галереї — відкриває збільшене фото у новій вкладці.
+  // Використовуємо event delegation, щоб не вішати окремий handler на кожне img.
+  const galleryEl = profileContent.querySelector('.profile-gallery');
+  if (galleryEl) {
+    galleryEl.addEventListener('click', (ev) => {
+      const img = ev.target.closest('img[data-full]');
+      if (!img) return;
+      window.open(img.dataset.full, '_blank', 'noopener,noreferrer');
+    });
+  }
+
+  // Дрібниця: коли користувач починає відтворювати одне відео/аудіо —
+  // ставимо паузу на інших, щоб вони не грали одночасно.
+  const players = profileContent.querySelectorAll('audio, video');
+  players.forEach(p => {
+    p.addEventListener('play', () => {
+      players.forEach(other => { if (other !== p) other.pause(); });
+    });
+  });
+}
+
+document.getElementById('profileClose').addEventListener('click', () => {
+  overlay.classList.remove('active');
+  document.body.style.overflow = '';
+});
+
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+});
+
+function lightCandle(btn, heroId) {
+  fetch(`/api/heroes/${heroId}/candle`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById(`candle-${heroId}`).textContent = `Запалено свічок: ${(data.candles || 0).toLocaleString('uk-UA')}`;
+    })
+    .catch(() => {
+      // Fallback — локально
+      const hero = heroes.find(h => h.id === heroId);
+      if (hero) hero.candles = (hero.candles || 0) + 1;
+    });
+  btn.innerHTML = '<span class="flame">🕯</span> Дякуємо. Вічна пам\'ять.';
+  btn.style.pointerEvents = 'none';
+  btn.style.opacity = '0.7';
+}
+
+// ═══════ ANIMATED COUNTERS ═══════
+function animateCounter(el, target, duration = 2000) {
+  let start = 0;
+  const step = timestamp => {
+    if (!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.floor(eased * target).toLocaleString('uk-UA');
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      fetch('/api/stats').then(r => r.json()).then(stats => {
+        animateCounter(document.getElementById('counterHeroes'), stats.heroes || heroes.length, 1500);
+        animateCounter(document.getElementById('counterCandles'), stats.candles || 0, 2500);
+        animateCounter(document.getElementById('counterStories'), stats.stories || heroes.length, 1500);
+      }).catch(() => {
+        animateCounter(document.getElementById('counterHeroes'), heroes.length, 1500);
+        animateCounter(document.getElementById('counterCandles'), 183750, 2500);
+        animateCounter(document.getElementById('counterStories'), heroes.length, 1500);
+      });
+      observer.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+observer.observe(document.querySelector('.counter-bar'));
+
+// ═══════ FILTER BY UNIT STRUCTURE ═══════
+let allHeroes = []; // зберігаємо повний список для фільтрації
+
+async function loadFilterOptions(brigade, battalion) {
+  try {
+    let url = '/api/units?';
+    if (brigade) url += `brigade=${encodeURIComponent(brigade)}&`;
+    if (battalion) url += `battalion=${encodeURIComponent(battalion)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    const bSel = document.getElementById('filterBrigade');
+    const batSel = document.getElementById('filterBattalion');
+    const cSel = document.getElementById('filterCompany');
+    
+    // Зберегти поточний вибір
+    const curBrig = bSel.value;
+    const curBat = batSel.value;
+    const curComp = cSel.value;
+
+    if (!brigade) {
+      // Оновити бригади тільки при початковому завантаженні
+      bSel.innerHTML = '<option value="">Всі бригади</option>' +
+        (data.brigades || []).map(b => `<option value="${b}" ${b === curBrig ? 'selected' : ''}>${b}</option>`).join('');
+    }
+    
+    batSel.innerHTML = '<option value="">Всі батальйони</option>' +
+      (data.battalions || []).map(b => `<option value="${b}" ${b === curBat ? 'selected' : ''}>${b}</option>`).join('');
+    
+    cSel.innerHTML = '<option value="">Всі роти</option>' +
+      (data.companies || []).map(c => `<option value="${c}" ${c === curComp ? 'selected' : ''}>${c}</option>`).join('');
+  } catch(e) { /* фільтри залишаться пустими */ }
+}
+
+async function applyFilters() {
+  const brigade = document.getElementById('filterBrigade').value;
+  const battalion = document.getElementById('filterBattalion').value;
+  const company = document.getElementById('filterCompany').value;
+  
+  // Каскадне оновлення списків
+  await loadFilterOptions(brigade || undefined, battalion || undefined);
+
+  // Показати/сховати кнопку скидання
+  const hasFilter = brigade || battalion || company;
+  document.getElementById('filterReset').classList.toggle('active', hasFilter);
+
+  // Фільтрувати з API
+  let url = '/api/heroes?limit=200';
+  if (brigade) url += `&brigade=${encodeURIComponent(brigade)}`;
+  if (battalion) url += `&battalion=${encodeURIComponent(battalion)}`;
+  if (company) url += `&company=${encodeURIComponent(company)}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    heroes = data.heroes;
+    renderGrid();
+    
+    // Показати кількість
+    const countEl = document.getElementById('filterCount');
+    if (hasFilter) {
+      countEl.textContent = `Знайдено: ${heroes.length}`;
+    } else {
+      countEl.textContent = '';
+    }
+  } catch(e) {
+    // Fallback — фільтрувати локально
+    heroes = allHeroes.filter(h => {
+      if (brigade && h.brigade !== brigade) return false;
+      if (battalion && h.battalion !== battalion) return false;
+      if (company && h.company !== company) return false;
+      return true;
+    });
+    renderGrid();
+  }
+}
+
+function resetFilters() {
+  document.getElementById('filterBrigade').value = '';
+  document.getElementById('filterBattalion').value = '';
+  document.getElementById('filterCompany').value = '';
+  document.getElementById('filterReset').classList.remove('active');
+  document.getElementById('filterCount').textContent = '';
+  loadFilterOptions();
+  // Перезавантажити всіх
+  heroes = [...allHeroes];
+  renderGrid();
+}
+
+// ═══════ INIT: LOAD DATA ═══════
+loadHeroes();
+
+// ═══════ PARALLAX ON SCROLL ═══════
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  const cards = document.querySelectorAll('.photo-card');
+
+  cards.forEach((card, i) => {
+    const speed = 0.02 + (i % 3) * 0.015;
+    const y = scrollY * speed;
+    if (!card.matches(':hover')) {
+      card.style.transform = `translateY(${-y}px)`;
+    }
+  });
+});
+
+// ═══════ PARTICLE CANVAS (subtle floating lights) ═══════
+const canvas = document.getElementById('particles-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = canvas.height + Math.random() * 100;
+    this.size = Math.random() * 2.5 + 0.5;
+    this.speedY = -(Math.random() * 0.4 + 0.1);
+    this.speedX = (Math.random() - 0.5) * 0.2;
+    this.opacity = Math.random() * 0.5 + 0.1;
+    this.flicker = Math.random() * 0.02;
+  }
+  update() {
+    this.y += this.speedY;
+    this.x += this.speedX + Math.sin(this.y * 0.01) * 0.15;
+    this.opacity += Math.sin(Date.now() * this.flicker) * 0.005;
+    if (this.y < -20) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(201, 168, 76, ${Math.max(0, this.opacity)})`;
+    ctx.fill();
+  }
+}
+
+const particles = Array.from({ length: 60 }, () => new Particle());
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+</script>
+</body>
+</html>

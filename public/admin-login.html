@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вхід — Адмін-панель</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0c;color:#e8e4dc;font-family:'Montserrat',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{width:min(90%,400px);background:#141418;border:1px solid rgba(201,168,76,.12);border-radius:16px;padding:3rem 2.5rem}
+.login-card h1{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;text-align:center;margin-bottom:.5rem}
+.login-card h1 span{color:#c9a84c}
+.login-card p{text-align:center;font-size:.85rem;color:#9a958a;margin-bottom:2rem}
+label{display:block;font-size:.8rem;color:#9a958a;margin-bottom:.4rem;letter-spacing:.05em}
+input[type="text"],input[type="password"]{width:100%;padding:.85rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.12);border-radius:10px;color:#e8e4dc;font-family:inherit;font-size:.95rem;outline:none;transition:border-color .3s;margin-bottom:1.2rem}
+input:focus{border-color:#8a7233}
+button{width:100%;padding:.9rem;background:transparent;border:1px solid #8a7233;border-radius:10px;color:#c9a84c;font-family:'Cormorant Garamond',serif;font-size:1.1rem;cursor:pointer;transition:all .3s}
+button:hover{background:rgba(201,168,76,.1);box-shadow:0 0 30px rgba(201,168,76,.1)}
+.error{background:rgba(200,50,50,.1);border:1px solid rgba(200,50,50,.2);border-radius:8px;padding:.7rem 1rem;font-size:.82rem;color:#e87070;margin-bottom:1rem;display:none}
+</style>
+</head>
+<body>
+<div class="login-card">
+  <h1>Адмін-<span>панель</span></h1>
+  <p>Книга Пам'яті</p>
+  <div class="error" id="error"></div>
+  <form id="loginForm">
+    <label>Логін</label>
+    <input type="text" name="username" required autofocus>
+    <label>Пароль</label>
+    <input type="password" name="password" required>
+    <button type="submit">Увійти</button>
+  </form>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const errorEl = document.getElementById('error');
+  try {
+    const res = await fetch('/admin/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: form.get('username'), password: form.get('password')})
+    });
+    const data = await res.json();
+    if (data.success) {
+      window.location.href = '/admin';
+    } else {
+      errorEl.textContent = data.error || 'Помилка входу';
+      errorEl.style.display = 'block';
+    }
+  } catch(err) {
+    errorEl.textContent = 'Помилка з\'єднання';
+    errorEl.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

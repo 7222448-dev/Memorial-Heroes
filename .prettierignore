@@ -1,0 +1,6 @@
+node_modules
+package-lock.json
+db/memorial.db
+db/backups
+public/uploads
+coverage

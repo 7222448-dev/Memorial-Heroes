@@ -1,0 +1,19 @@
+{
+  "env": {
+    "node": true,
+    "browser": true,
+    "es2022": true,
+    "jest": true
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "caughtErrors": "none" }],
+    "no-console": "off",
+    "no-empty": ["warn", { "allowEmptyCatch": true }]
+  },
+  "ignorePatterns": ["node_modules/", "db/backups/", "public/uploads/", "coverage/"]
+}

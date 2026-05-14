@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Адмін-панель — Книга Пам'яті</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0c;--card:#141418;--surface:#1a1a20;--gold:#c9a84c;--gold-dim:#8a7233;--gold-glow:rgba(201,168,76,.15);--text:#e8e4dc;--muted:#9a958a;--dim:#5a5650;--border:rgba(201,168,76,.12);--danger:#e24b4a;--success:#5dca7a}
+body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;min-height:100vh}
+
+/* ═══ HEADER ═══ */
+.header{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);background:var(--card)}
+.header h1{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400}
+.header h1 span{color:var(--gold)}
+.header-actions{display:flex;gap:.8rem;align-items:center}
+.btn{padding:.5rem 1.2rem;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:.82rem;cursor:pointer;transition:all .3s;text-decoration:none}
+.btn:hover{border-color:var(--gold-dim);color:var(--gold)}
+.btn-primary{border-color:var(--gold-dim);color:var(--gold);background:var(--gold-glow)}
+.btn-primary:hover{background:rgba(201,168,76,.2)}
+.btn-danger{border-color:rgba(226,75,74,.2);color:var(--danger)}
+.btn-danger:hover{background:rgba(226,75,74,.1)}
+.btn-sm{padding:.35rem .8rem;font-size:.75rem}
+
+/* ═══ LAYOUT ═══ */
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem}
+.stat-card .number{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--gold)}
+.stat-card .label{font-size:.75rem;color:var(--muted);margin-top:.2rem;letter-spacing:.05em}
+
+/* ═══ TOOLBAR ═══ */
+.toolbar{display:flex;gap:1rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap}
+.toolbar input{flex:1;min-width:200px;padding:.7rem 1rem;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:.9rem;outline:none}
+.toolbar input:focus{border-color:var(--gold-dim)}
+
+/* ═══ TABLE ═══ */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:.8rem 1rem;font-size:.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);font-weight:500}
+td{padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.03);font-size:.85rem;vertical-align:middle}
+tr:hover td{background:rgba(201,168,76,.02)}
+.hero-row-photo{width:44px;height:44px;border-radius:8px;object-fit:cover;border:1px solid var(--border)}
+.hero-row-name{font-weight:500}
+.hero-row-callsign{color:var(--gold);font-size:.8rem}
+.actions{display:flex;gap:.5rem}
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--dim)}
+.empty-state h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;margin-bottom:.5rem;color:var(--muted)}
+
+/* ═══ MODAL ═══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(5,5,8,.9);backdrop-filter:blur(12px);z-index:1000;display:none;overflow-y:auto;padding:2rem}
+.modal-overlay.active{display:flex;justify-content:center}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:min(95%,720px);padding:2rem;margin:auto;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+.modal-header h2{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400}
+.modal-close{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.modal-close:hover{border-color:var(--gold-dim);color:var(--gold)}
+
+/* ═══ FORM ═══ */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.form-row.full{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:.3rem}
+.form-group label{font-size:.75rem;color:var(--muted);letter-spacing:.04em}
+.form-group input,.form-group textarea,.form-group select{padding:.65rem .9rem;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:.88rem;outline:none;transition:border-color .3s}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--gold-dim)}
+.form-group textarea{min-height:120px;resize:vertical;line-height:1.6}
+
+/* Awards tags */
+.awards-input{display:flex;flex-wrap:wrap;gap:.5rem;padding:.5rem;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;min-height:42px;align-items:center}
+.award-tag{display:flex;align-items:center;gap:.3rem;padding:.25rem .6rem;background:var(--gold-glow);border:1px solid rgba(201,168,76,.2);border-radius:16px;font-size:.75rem;color:var(--gold)}
+.award-tag button{background:none;border:none;color:var(--gold-dim);cursor:pointer;font-size:.9rem;padding:0 0 0 .2rem}
+.awards-input input{flex:1;min-width:120px;background:none;border:none;color:var(--text);font-size:.85rem;outline:none;padding:.3rem}
+
+/* Photo upload */
+.photo-upload{display:flex;align-items:center;gap:1.5rem}
+.photo-preview{width:100px;height:130px;border-radius:10px;object-fit:cover;border:2px solid var(--border);background:var(--surface)}
+.photo-placeholder{width:100px;height:130px;border-radius:10px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:.75rem;text-align:center;padding:.5rem}
+
+/* Gallery grid */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.5rem;margin-top:.5rem}
+.gallery-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.gallery-item img{width:100%;height:100%;object-fit:cover}
+.gallery-item .remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* Media list */
+.media-list-admin{display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem}
+.media-item-admin{display:flex;align-items:center;gap:.8rem;padding:.6rem .8rem;background:var(--surface);border-radius:8px;border:1px solid rgba(255,255,255,.04)}
+.media-item-admin .media-icon{width:32px;height:32px;border-radius:50%;background:var(--gold-glow);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:.8rem;flex-shrink:0}
+.media-item-admin .media-info{flex:1;font-size:.82rem}
+.media-item-admin .media-info span{color:var(--dim);font-size:.72rem}
+
+.toast{position:fixed;bottom:2rem;right:2rem;padding:.8rem 1.5rem;background:var(--card);border:1px solid var(--success);border-radius:10px;color:var(--success);font-size:.85rem;z-index:2000;animation:fadeIn .3s;display:none}
+.toast.error{border-color:var(--danger);color:var(--danger)}
+
+@media(max-width:768px){
+  .form-row{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .header{flex-direction:column;gap:.8rem;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <h1>🕯️ Адмін-панель — <span>Книга Пам'яті</span></h1>
+  <div class="header-actions">
+    <a href="/" class="btn" target="_blank">Переглянути сайт ↗</a>
+    <button class="btn" onclick="showPasswordModal()">Змінити пароль</button>
+    <button class="btn btn-danger" onclick="logout()">Вийти</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="container">
+  <!-- Stats -->
+  <div class="stats" id="statsGrid"></div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input type="text" id="searchAdmin" placeholder="Пошук героя за прізвищем...">
+    <select id="filterBrigade" onchange="filterChanged()" style="padding:.55rem .8rem;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:.82rem">
+      <option value="">Всі бригади</option>
+    </select>
+    <button class="btn" onclick="showImportModal()">📥 Імпорт</button>
+    <a class="btn" href="/admin/export?format=csv" target="_blank">📤 CSV</a>
+    <a class="btn" href="/admin/export?format=json" target="_blank">📤 JSON</a>
+    <button class="btn btn-primary" onclick="openHeroModal()">+ Додати героя</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Фото</th>
+          <th>Ім'я</th>
+          <th>Позивний</th>
+          <th>Звання</th>
+          <th>Бригада</th>
+          <th>Батальйон</th>
+          <th>Свічки</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody id="heroesTable"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <h3>Поки немає записів</h3>
+      <p>Натисніть «Додати героя», щоб створити перший запис</p>
+    </div>
+  </div>
+</div>
+
+<!-- HERO MODAL -->
+<div class="modal-overlay" id="heroModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Додати героя</h2>
+      <button class="modal-close" onclick="closeHeroModal()">&times;</button>
+    </div>
+    <form id="heroForm" enctype="multipart/form-data">
+      <input type="hidden" id="heroId">
+      
+      <!-- Photo -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Фото</label>
+          <div class="photo-upload">
+            <div class="photo-placeholder" id="photoPreviewWrap">
+              <span>Завантажте<br>фото</span>
+            </div>
+            <div>
+              <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+              <button type="button" class="btn btn-sm" onclick="document.getElementById('photoInput').click()">Обрати фото</button>
+              <p style="font-size:.72rem;color:var(--dim);margin-top:.4rem">JPG, PNG до 10MB</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Name & Callsign -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Повне ім'я *</label>
+          <input type="text" id="heroName" required placeholder="Прізвище Ім'я По-батькові">
+        </div>
+        <div class="form-group">
+          <label>Позивний</label>
+          <input type="text" id="heroCallsign" placeholder="Позивний">
+        </div>
+      </div>
+
+      <!-- Rank & Unit -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Звання</label>
+          <input type="text" id="heroRank" placeholder="Солдат, Сержант, Лейтенант...">
+        </div>
+        <div class="form-group">
+          <label>Підрозділ (скорочено)</label>
+          <input type="text" id="heroUnit" placeholder="1 ОШБр, 93 ОМБр...">
+        </div>
+      </div>
+
+      <!-- Brigade / Battalion / Company -->
+      <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="form-group">
+          <label>Бригада</label>
+          <input type="text" id="heroBrigade" placeholder="1-ша окрема штурмова бригада" list="brigadesList">
+          <datalist id="brigadesList"></datalist>
+        </div>
+        <div class="form-group">
+          <label>Батальйон</label>
+          <input type="text" id="heroBattalion" placeholder="2-й штурмовий батальйон" list="battalionsList">
+          <datalist id="battalionsList"></datalist>
+        </div>
+        <div class="form-group">
+          <label>Рота</label>
+          <input type="text" id="heroCompany" placeholder="1-ша рота" list="companiesList">
+          <datalist id="companiesList"></datalist>
+        </div>
+      </div>
+
+      <!-- Dates & City -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Дата народження</label>
+          <input type="text" id="heroBorn" placeholder="01.01.1990">
+        </div>
+        <div class="form-group">
+          <label>Дата загибелі</label>
+          <input type="text" id="heroFallen" placeholder="01.01.2023">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Місто</label>
+          <input type="text" id="heroCity" placeholder="Звідки родом">
+        </div>
+      </div>
+
+      <!-- Awards -->
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Нагороди (Enter для додавання)</label>
+          <div class="awards-input" id="awardsWrap" onclick="this.querySelector('input').focus()">
+            <input type="text" id="awardInput" placeholder="Введіть назву нагороди..." onkeydown="addAward(event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Story -->
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Історія</label>
+          <textarea id="heroStory" placeholder="Розкажіть про цю людину... (можна використовувати HTML теги &lt;p&gt;)"></textarea>
+        </div>
+      </div>
+
+      <!-- Gallery (only in edit mode) -->
+      <div id="gallerySection" style="display:none">
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Галерея фото</label>
+            <input type="file" id="galleryInput" accept="image/*" multiple style="display:none" onchange="uploadGallery(this)">
+            <button type="button" class="btn btn-sm" onclick="document.getElementById('galleryInput').click()">+ Додати фото</button>
+            <div class="gallery-grid" id="galleryGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Media (only in edit mode) -->
+      <div id="mediaSection" style="display:none">
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Аудіо / Відео</label>
+            <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
+              <input type="file" id="mediaInput" accept="audio/*,video/*" style="display:none" onchange="uploadMedia(this)">
+              <input type="text" id="mediaTitle" placeholder="Назва запису" style="flex:1">
+              <select id="mediaType" style="width:100px">
+                <option value="audio">Аудіо</option>
+                <option value="video">Відео</option>
+              </select>
+              <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('mediaInput').click()">Завантажити</button>
+            </div>
+            <div class="media-list-admin" id="mediaList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem">
+        <button type="button" class="btn" onclick="closeHeroModal()">Скасувати</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Зберегти</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="modal-overlay" id="passwordModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h2>Змінити пароль</h2>
+      <button class="modal-close" onclick="document.getElementById('passwordModal').classList.remove('active')">&times;</button>
+    </div>
+    <form onsubmit="changePassword(event)">
+      <div class="form-group" style="margin-bottom:1rem">
+        <label>Поточний пароль</label>
+        <input type="password" id="currentPwd" required>
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem">
+        <label>Новий пароль</label>
+        <input type="password" id="newPwd" required minlength="6">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%">Зберегти</button>
+    </form>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <h2>📥 Імпорт даних</h2>
+      <button class="modal-close" onclick="closeImportModal()">&times;</button>
+    </div>
+    
+    <div id="importStep1">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">
+        Завантажте файл CSV, TSV або JSON з даними героїв. Заголовки колонок автоматично розпізнаються українською, російською та англійською.
+      </p>
+      
+      <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1.5rem">
+        <a href="/admin/import-template" class="btn btn-sm" download>⬇ Завантажити шаблон CSV</a>
+        <span style="font-size:.75rem;color:var(--dim)">Використайте як зразок формату</span>
+      </div>
+
+      <div style="border:2px dashed var(--border);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:border-color .3s" 
+           id="importDropZone"
+           onclick="document.getElementById('importFileInput').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--gold-dim)'"
+           ondragleave="this.style.borderColor='var(--border)'"
+           ondrop="handleImportDrop(event)">
+        <p style="font-size:1.5rem;margin-bottom:.5rem">📁</p>
+        <p style="font-size:.9rem;color:var(--muted)">Перетягніть файл сюди або натисніть</p>
+        <p style="font-size:.75rem;color:var(--dim);margin-top:.3rem">.csv, .tsv, .json — до 50MB</p>
+        <input type="file" id="importFileInput" accept=".csv,.tsv,.json" style="display:none" onchange="previewImport(this)">
+      </div>
+
+      <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem">
+        <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--muted);cursor:pointer">
+          <input type="checkbox" id="skipDuplicates" checked style="accent-color:var(--gold)"> Пропускати дублікати
+        </label>
+      </div>
+    </div>
+
+    <div id="importStep2" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <p style="font-size:.9rem;color:var(--text)">Попередній перегляд: <span id="importTotal" style="color:var(--gold)"></span></p>
+        <button class="btn btn-sm" onclick="resetImport()">← Назад</button>
+      </div>
+
+      <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:1rem">
+        <table id="importPreviewTable" style="font-size:.78rem">
+          <thead id="importPreviewHead"></thead>
+          <tbody id="importPreviewBody"></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;gap:1rem;justify-content:flex-end">
+        <button class="btn" onclick="closeImportModal()">Скасувати</button>
+        <button class="btn btn-primary" onclick="executeImport()" id="importBtn">Імпортувати</button>
+      </div>
+    </div>
+
+    <div id="importStep3" style="display:none;text-align:center;padding:2rem 0">
+      <p style="font-size:2rem;margin-bottom:.5rem">✅</p>
+      <p style="font-size:1.1rem;color:var(--text);margin-bottom:.3rem" id="importResultText"></p>
+      <p style="font-size:.85rem;color:var(--muted)" id="importResultDetails"></p>
+      <div id="importErrors" style="margin-top:1rem;text-align:left;max-height:150px;overflow-y:auto"></div>
+      <button class="btn btn-primary" onclick="closeImportModal();loadHeroes();loadStats()" style="margin-top:1.5rem">Готово</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════ CSRF (double-submit cookie) ═══════
+// На кожен мутаційний запит до /admin/* прикладаємо x-csrf-token.
+// Токен видається бекендом разом з cookie; зіставлення відбувається на сервері.
+let csrfToken = null;
+async function refreshCsrfToken() {
+  try {
+    const r = await fetch('/admin/csrf-token', { credentials: 'same-origin' });
+    if (!r.ok) return;
+    const data = await r.json();
+    csrfToken = data.csrfToken;
+  } catch (e) { /* ignore */ }
+}
+
+// Перехоплення fetch: для мутацій на /admin/* додаємо заголовок з токеном.
+// Якщо отримали 403 EBADCSRFTOKEN — оновлюємо токен і пробуємо ще раз (одноразово).
+const _origFetch = window.fetch.bind(window);
+window.fetch = async function(input, init = {}) {
+  const url = typeof input === 'string' ? input : input.url;
+  const method = (init.method || 'GET').toUpperCase();
+  const needsCsrf = url.startsWith('/admin/') && !url.includes('/admin/login') && method !== 'GET' && method !== 'HEAD';
+
+  const doFetch = async () => {
+    const opts = { credentials: 'same-origin', ...init };
+    if (needsCsrf) {
+      opts.headers = { ...(opts.headers || {}), 'x-csrf-token': csrfToken || '' };
+    }
+    return _origFetch(input, opts);
+  };
+
+  let res = await doFetch();
+  if (needsCsrf && res.status === 403) {
+    await refreshCsrfToken();
+    res = await doFetch();
+  }
+  return res;
+};
+
+// Беремо токен одразу при завантаженні сторінки
+refreshCsrfToken();
+
+let currentAwards = [];
+let editingHeroId = null;
+
+// ═══════ TOAST ═══════
+function showToast(msg, error = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (error ? ' error' : '');
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// ═══════ LOAD STATS ═══════
+async function loadStats() {
+  const res = await fetch('/api/stats');
+  const data = await res.json();
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="number">${data.heroes}</div><div class="label">Героїв у базі</div></div>
+    <div class="stat-card"><div class="number">${data.candles.toLocaleString('uk-UA')}</div><div class="label">Запалених свічок</div></div>
+    <div class="stat-card"><div class="number">${data.stories}</div><div class="label">Записаних історій</div></div>
+    <div class="stat-card"><div class="number">${data.media}</div><div class="label">Медіафайлів</div></div>
+  `;
+}
+
+// ═══════ LOAD HEROES TABLE ═══════
+async function loadHeroes(search = '') {
+  const res = await fetch('/admin/heroes');
+  const data = await res.json();
+  const tbody = document.getElementById('heroesTable');
+  const empty = document.getElementById('emptyState');
+
+  let heroes = data.heroes;
+  if (search) {
+    const q = search.toLowerCase();
+    heroes = heroes.filter(h => 
+      h.name.toLowerCase().includes(q) || 
+      (h.callsign || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (heroes.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  tbody.innerHTML = heroes.map(h => `
+    <tr>
+      <td>${h.photo ? `<img class="hero-row-photo" src="${h.photo}" alt="">` : '<div class="photo-placeholder" style="width:44px;height:44px;font-size:.6rem">Нема</div>'}</td>
+      <td><span class="hero-row-name">${h.name}</span></td>
+      <td><span class="hero-row-callsign">${h.callsign ? '«' + h.callsign + '»' : '—'}</span></td>
+      <td style="font-size:.8rem;color:var(--muted)">${h.rank || '—'}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${h.brigade || h.unit || '—'}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${h.battalion || '—'}</td>
+      <td style="font-size:.85rem;color:var(--gold)">${(h.candles || 0).toLocaleString('uk-UA')}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-sm" onclick="editHero(${h.id})">Редагувати</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteHero(${h.id}, '${h.name.replace(/'/g,"\\'")}')">Видалити</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ═══════ SEARCH ═══════
+document.getElementById('searchAdmin').addEventListener('input', (e) => {
+  loadHeroes(e.target.value);
+});
+
+// ═══════ MODAL OPEN/CLOSE ═══════
+function openHeroModal(hero = null) {
+  editingHeroId = hero ? hero.id : null;
+  document.getElementById('modalTitle').textContent = hero ? 'Редагувати героя' : 'Додати героя';
+  document.getElementById('heroId').value = hero ? hero.id : '';
+  document.getElementById('heroName').value = hero ? hero.name : '';
+  document.getElementById('heroCallsign').value = hero ? (hero.callsign || '') : '';
+  document.getElementById('heroRank').value = hero ? (hero.rank || '') : '';
+  document.getElementById('heroUnit').value = hero ? (hero.unit || '') : '';
+  document.getElementById('heroBrigade').value = hero ? (hero.brigade || '') : '';
+  document.getElementById('heroBattalion').value = hero ? (hero.battalion || '') : '';
+  document.getElementById('heroCompany').value = hero ? (hero.company || '') : '';
+  document.getElementById('heroBorn').value = hero ? (hero.born || '') : '';
+  document.getElementById('heroFallen').value = hero ? (hero.fallen || '') : '';
+  document.getElementById('heroCity').value = hero ? (hero.city || '') : '';
+  document.getElementById('heroStory').value = hero ? (hero.story || '') : '';
+
+  // Photo preview
+  const wrap = document.getElementById('photoPreviewWrap');
+  if (hero && hero.photo) {
+    wrap.innerHTML = `<img class="photo-preview" src="${hero.photo}" alt="">`;
+  } else {
+    wrap.innerHTML = '<span>Завантажте<br>фото</span>';
+  }
+
+  // Awards
+  currentAwards = hero ? hero.awards.map(a => a.title) : [];
+  renderAwards();
+
+  // Gallery & Media sections — visible only in edit mode
+  document.getElementById('gallerySection').style.display = hero ? 'block' : 'none';
+  document.getElementById('mediaSection').style.display = hero ? 'block' : 'none';
+
+  if (hero) {
+    renderGallery(hero.gallery);
+    renderMedia(hero.media);
+  }
+
+  document.getElementById('heroModal').classList.add('active');
+}
+
+function closeHeroModal() {
+  document.getElementById('heroModal').classList.remove('active');
+  document.getElementById('photoInput').value = '';
+  editingHeroId = null;
+}
+
+// ═══════ PHOTO PREVIEW ═══════
+function previewPhoto(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('photoPreviewWrap').innerHTML = `<img class="photo-preview" src="${e.target.result}" alt="">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+// ═══════ AWARDS ═══════
+function addAward(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const val = e.target.value.trim();
+  if (!val) return;
+  currentAwards.push(val);
+  e.target.value = '';
+  renderAwards();
+}
+
+function removeAward(idx) {
+  currentAwards.splice(idx, 1);
+  renderAwards();
+}
+
+function renderAwards() {
+  const wrap = document.getElementById('awardsWrap');
+  const input = wrap.querySelector('input');
+  wrap.querySelectorAll('.award-tag').forEach(t => t.remove());
+  currentAwards.forEach((a, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'award-tag';
+    tag.innerHTML = `${a} <button type="button" onclick="removeAward(${i})">&times;</button>`;
+    wrap.insertBefore(tag, input);
+  });
+}
+
+// ═══════ GALLERY ═══════
+function renderGallery(photos) {
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = (photos || []).map(p => `
+    <div class="gallery-item">
+      <img src="${p.filename}" alt="">
+      <button class="remove" onclick="deleteGalleryPhoto(${p.id})">&times;</button>
+    </div>
+  `).join('');
+}
+
+async function uploadGallery(input) {
+  if (!editingHeroId || !input.files.length) return;
+  const formData = new FormData();
+  for (const f of input.files) formData.append('photos', f);
+  
+  const res = await fetch(`/admin/heroes/${editingHeroId}/gallery`, { method: 'POST', body: formData });
+  if (res.ok) {
+    showToast('Фото завантажено');
+    const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
+    renderGallery(hero.gallery);
+  }
+  input.value = '';
+}
+
+async function deleteGalleryPhoto(id) {
+  await fetch(`/admin/gallery/${id}`, { method: 'DELETE' });
+  const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
+  renderGallery(hero.gallery);
+}
+
+// ═══════ MEDIA ═══════
+function renderMedia(mediaItems) {
+  const list = document.getElementById('mediaList');
+  list.innerHTML = (mediaItems || []).map(m => `
+    <div class="media-item-admin">
+      <div class="media-icon">${m.type === 'audio' ? '♪' : '▶'}</div>
+      <div class="media-info">
+        ${m.title || 'Без назви'} <br><span>${m.type === 'audio' ? 'Аудіо' : 'Відео'}${m.duration ? ' · ' + m.duration : ''}</span>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="deleteMedia(${m.id})">✕</button>
+    </div>
+  `).join('');
+}
+
+async function uploadMedia(input) {
+  if (!editingHeroId || !input.files[0]) return;
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+  formData.append('title', document.getElementById('mediaTitle').value || input.files[0].name);
+  formData.append('type', document.getElementById('mediaType').value);
+  formData.append('duration', '');
+
+  const res = await fetch(`/admin/heroes/${editingHeroId}/media`, { method: 'POST', body: formData });
+  if (res.ok) {
+    showToast('Медіафайл завантажено');
+    document.getElementById('mediaTitle').value = '';
+    const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
+    renderMedia(hero.media);
+  }
+  input.value = '';
+}
+
+async function deleteMedia(id) {
+  await fetch(`/admin/media/${id}`, { method: 'DELETE' });
+  const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
+  renderMedia(hero.media);
+}
+
+// ═══════ SAVE HERO ═══════
+document.getElementById('heroForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData();
+  formData.append('name', document.getElementById('heroName').value);
+  formData.append('callsign', document.getElementById('heroCallsign').value);
+  formData.append('rank', document.getElementById('heroRank').value);
+  formData.append('unit', document.getElementById('heroUnit').value);
+  formData.append('brigade', document.getElementById('heroBrigade').value);
+  formData.append('battalion', document.getElementById('heroBattalion').value);
+  formData.append('company', document.getElementById('heroCompany').value);
+  formData.append('born', document.getElementById('heroBorn').value);
+  formData.append('fallen', document.getElementById('heroFallen').value);
+  formData.append('city', document.getElementById('heroCity').value);
+  formData.append('story', document.getElementById('heroStory').value);
+  formData.append('awards', JSON.stringify(currentAwards));
+
+  const photoFile = document.getElementById('photoInput').files[0];
+  if (photoFile) formData.append('photo', photoFile);
+
+  const id = document.getElementById('heroId').value;
+  const url = id ? `/admin/heroes/${id}` : '/admin/heroes';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, { method, body: formData });
+    const data = await res.json();
+    if (data.success || data.id) {
+      showToast(id ? 'Запис оновлено' : 'Героя додано');
+      closeHeroModal();
+      loadHeroes();
+      loadStats();
+    } else {
+      showToast(data.error || 'Помилка', true);
+    }
+  } catch (err) {
+    showToast('Помилка збереження', true);
+  }
+});
+
+// ═══════ EDIT HERO ═══════
+async function editHero(id) {
+  const res = await fetch(`/admin/heroes/${id}`);
+  const hero = await res.json();
+  openHeroModal(hero);
+}
+
+// ═══════ DELETE HERO ═══════
+async function deleteHero(id, name) {
+  if (!confirm(`Ви впевнені, що хочете видалити запис "${name}"?\nЦю дію не можна скасувати.`)) return;
+  const res = await fetch(`/admin/heroes/${id}`, { method: 'DELETE' });
+  if (res.ok) {
+    showToast('Запис видалено');
+    loadHeroes();
+    loadStats();
+  }
+}
+
+// ═══════ PASSWORD ═══════
+function showPasswordModal() {
+  document.getElementById('passwordModal').classList.add('active');
+}
+
+async function changePassword(e) {
+  e.preventDefault();
+  const res = await fetch('/admin/change-password', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      current: document.getElementById('currentPwd').value,
+      newPassword: document.getElementById('newPwd').value
+    })
+  });
+  const data = await res.json();
+  if (data.success) {
+    showToast('Пароль змінено');
+    document.getElementById('passwordModal').classList.remove('active');
+  } else {
+    showToast(data.error || 'Помилка', true);
+  }
+}
+
+// ═══════ LOGOUT ═══════
+async function logout() {
+  await fetch('/admin/logout', { method: 'POST' });
+  window.location.href = '/admin/login';
+}
+
+// ═══════ FILTER ═══════
+async function filterChanged() {
+  const brigade = document.getElementById('filterBrigade').value;
+  // Фільтруємо у завантаженій таблиці
+  loadHeroes(document.getElementById('searchAdmin').value);
+}
+
+async function loadFilterOptions() {
+  try {
+    const res = await fetch('/api/units');
+    const data = await res.json();
+    const sel = document.getElementById('filterBrigade');
+    sel.innerHTML = '<option value="">Всі бригади</option>' +
+      (data.brigades || []).map(b => `<option value="${b}">${b}</option>`).join('');
+    
+    // Datalist для форми
+    document.getElementById('brigadesList').innerHTML = (data.brigades || []).map(b => `<option value="${b}">`).join('');
+    document.getElementById('battalionsList').innerHTML = (data.battalions || []).map(b => `<option value="${b}">`).join('');
+    document.getElementById('companiesList').innerHTML = (data.companies || []).map(b => `<option value="${b}">`).join('');
+  } catch(e) {}
+}
+
+// Оновити loadHeroes щоб враховувати фільтр бригади
+const _origLoadHeroes = loadHeroes;
+loadHeroes = async function(search = '') {
+  const res = await fetch('/admin/heroes');
+  const data = await res.json();
+  const tbody = document.getElementById('heroesTable');
+  const empty = document.getElementById('emptyState');
+
+  let heroes = data.heroes;
+  const brigadeFilter = document.getElementById('filterBrigade').value;
+  
+  if (brigadeFilter) {
+    heroes = heroes.filter(h => h.brigade === brigadeFilter);
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    heroes = heroes.filter(h => 
+      h.name.toLowerCase().includes(q) || 
+      (h.callsign || '').toLowerCase().includes(q) ||
+      (h.brigade || '').toLowerCase().includes(q) ||
+      (h.battalion || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (heroes.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  tbody.innerHTML = heroes.map(h => `
+    <tr>
+      <td>${h.photo ? `<img class="hero-row-photo" src="${h.photo}" alt="">` : '<div class="photo-placeholder" style="width:44px;height:44px;font-size:.6rem">Нема</div>'}</td>
+      <td><span class="hero-row-name">${h.name}</span></td>
+      <td><span class="hero-row-callsign">${h.callsign ? '«' + h.callsign + '»' : '—'}</span></td>
+      <td style="font-size:.8rem;color:var(--muted)">${h.rank || '—'}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${h.brigade || h.unit || '—'}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${h.battalion || '—'}</td>
+      <td style="font-size:.85rem;color:var(--gold)">${(h.candles || 0).toLocaleString('uk-UA')}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-sm" onclick="editHero(${h.id})">Редагувати</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteHero(${h.id}, '${h.name.replace(/'/g,"\\'")}')">Видалити</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ═══════ IMPORT ═══════
+let importFile = null;
+
+function showImportModal() {
+  document.getElementById('importModal').classList.add('active');
+  resetImport();
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').classList.remove('active');
+  importFile = null;
+}
+
+function resetImport() {
+  document.getElementById('importStep1').style.display = 'block';
+  document.getElementById('importStep2').style.display = 'none';
+  document.getElementById('importStep3').style.display = 'none';
+  document.getElementById('importFileInput').value = '';
+  importFile = null;
+}
+
+function handleImportDrop(e) {
+  e.preventDefault();
+  e.currentTarget.style.borderColor = 'var(--border)';
+  if (e.dataTransfer.files.length) {
+    importFile = e.dataTransfer.files[0];
+    previewImportFile();
+  }
+}
+
+function previewImport(input) {
+  if (!input.files[0]) return;
+  importFile = input.files[0];
+  previewImportFile();
+}
+
+async function previewImportFile() {
+  if (!importFile) return;
+  const formData = new FormData();
+  formData.append('file', importFile);
+  formData.append('mode', 'preview');
+
+  try {
+    const res = await fetch('/admin/import', { method: 'POST', body: formData });
+    const data = await res.json();
+    
+    if (data.error) { showToast(data.error, true); return; }
+
+    document.getElementById('importTotal').textContent = `${data.total} записів з файлу "${importFile.name}"`;
+    
+    // Таблиця preview
+    const fields = data.fields || [];
+    document.getElementById('importPreviewHead').innerHTML = '<tr>' + 
+      fields.map(f => `<th style="white-space:nowrap">${f}</th>`).join('') + '</tr>';
+    
+    document.getElementById('importPreviewBody').innerHTML = data.records.map(r => 
+      '<tr>' + fields.map(f => `<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[f] || ''}</td>`).join('') + '</tr>'
+    ).join('');
+
+    document.getElementById('importStep1').style.display = 'none';
+    document.getElementById('importStep2').style.display = 'block';
+  } catch(err) {
+    showToast('Помилка читання файлу', true);
+  }
+}
+
+async function executeImport() {
+  if (!importFile) return;
+  const btn = document.getElementById('importBtn');
+  btn.textContent = 'Імпортую...';
+  btn.disabled = true;
+
+  const formData = new FormData();
+  formData.append('file', importFile);
+  formData.append('skip_duplicates', document.getElementById('skipDuplicates').checked ? 'true' : 'false');
+
+  try {
+    const res = await fetch('/admin/import', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (data.error) { 
+      showToast(data.error, true); 
+      btn.textContent = 'Імпортувати';
+      btn.disabled = false;
+      return; 
+    }
+
+    document.getElementById('importResultText').textContent = `Імпортовано ${data.imported} з ${data.total} записів`;
+    document.getElementById('importResultDetails').textContent = data.skipped > 0 ? `Пропущено дублікатів: ${data.skipped}` : '';
+    
+    if (data.errors && data.errors.length > 0) {
+      document.getElementById('importErrors').innerHTML = 
+        '<p style="font-size:.78rem;color:var(--danger);margin-bottom:.3rem">Помилки:</p>' +
+        data.errors.map(e => `<p style="font-size:.72rem;color:var(--dim)">${e}</p>`).join('');
+    } else {
+      document.getElementById('importErrors').innerHTML = '';
+    }
+
+    document.getElementById('importStep2').style.display = 'none';
+    document.getElementById('importStep3').style.display = 'block';
+    loadFilterOptions();
+  } catch(err) {
+    showToast('Помилка імпорту', true);
+  }
+  btn.textContent = 'Імпортувати';
+  btn.disabled = false;
+}
+
+// ═══════ INIT ═══════
+loadStats();
+loadHeroes();
+loadFilterOptions();
+</script>
+</body>
+</html>

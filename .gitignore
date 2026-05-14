@@ -1,0 +1,33 @@
+# ─── Залежності ──────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── База даних (НЕ КОМІТИМО — містить дані героїв) ──────────
+db/memorial.db
+db/memorial.db-journal
+db/memorial.db-wal
+db/memorial.db-shm
+db/backups/
+
+# ─── Завантажені файли користувачів ──────────────────────────
+public/uploads/photos/
+public/uploads/audio/
+public/uploads/video/
+
+# ─── Конфіги та секрети ──────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── IDE та системні файли ───────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ─── Тести та лінт ───────────────────────────────────────────
+coverage/
+.eslintcache
