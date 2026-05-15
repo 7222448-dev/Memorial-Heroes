@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const { initDatabase } = require('./db/init');
 const { startBackupScheduler } = require('./db/backup');
+const { UPLOADS_DIR, useVolume, VOLUME_DIR } = require('./db/paths');
 const { doubleCsrfProtection, generateCsrfToken } = require('./middleware/csrf');
 
 const app = express();
@@ -21,7 +22,9 @@ async function start() {
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(cookieParser(process.env.SESSION_SECRET || 'memorial-heroes-ua-secret-change-me'));
   app.use(express.static(path.join(__dirname, 'public')));
-  app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+  // /uploads віддаємо з UPLOADS_DIR — на Railway з Volume це постійне сховище,
+  // локально — public/uploads. Те саме URL у обох випадках.
+  app.use('/uploads', express.static(UPLOADS_DIR));
 
   app.use(session({
     name: 'memorial.sid',
@@ -73,7 +76,13 @@ async function start() {
 
   app.listen(PORT, () => {
     console.log(`\n🕯️  Книга Пам'яті: http://localhost:${PORT}`);
-    console.log(`📋 Адмін-панель:   http://localhost:${PORT}/admin\n`);
+    console.log(`📋 Адмін-панель:   http://localhost:${PORT}/admin`);
+    if (useVolume) {
+      console.log(`💾 Volume підключено: ${VOLUME_DIR} (дані переживуть redeploy)`);
+    } else {
+      console.log(`📁 Локальне сховище (без Volume) — дані можуть бути втрачені при redeploy`);
+    }
+    console.log('');
   });
 
   // Авто-бекапи стартують після підняття сервера

@@ -5,6 +5,17 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
+const { UPLOADS_DIR } = require('../db/paths');
+
+// Перетворити URL-шлях типу "/uploads/photos/abc.jpg" на реальний шлях на диску.
+// У БД ми зберігаємо саме URL-шлях, бо він однаковий і для віддачі express.static,
+// і для тегів <img src>. А для видалення треба знати фізичне розташування файлу.
+function urlToFsPath(urlPath) {
+  if (!urlPath) return null;
+  // Прибираємо префікс /uploads/ і додаємо до UPLOADS_DIR
+  const rel = urlPath.replace(/^\/?uploads\//, '');
+  return path.join(UPLOADS_DIR, rel);
+}
 
 // Захист від brute-force: 10 спроб логіну на 15 хвилин з одного IP
 const loginLimiter = rateLimit({
@@ -21,7 +32,7 @@ const storage = multer.diskStorage({
     let folder = 'photos';
     if (file.mimetype.startsWith('audio/')) folder = 'audio';
     if (file.mimetype.startsWith('video/')) folder = 'video';
-    const dest = path.join(__dirname, '..', 'public', 'uploads', folder);
+    const dest = path.join(UPLOADS_DIR, folder);
     fs.mkdirSync(dest, { recursive: true });
     cb(null, dest);
   },
@@ -137,10 +148,13 @@ router.delete('/heroes/:id', requireAuth, (req, res) => {
     const media = req.db.all('SELECT filename FROM media WHERE hero_id = ?', [id]);
     const hero = req.db.get('SELECT photo FROM heroes WHERE id = ?', [id]);
     [...gallery, ...media].forEach(f => {
-      const p = path.join(__dirname, '..', 'public', f.filename);
-      if (fs.existsSync(p)) fs.unlinkSync(p);
+      const p = urlToFsPath(f.filename);
+      if (p && fs.existsSync(p)) fs.unlinkSync(p);
     });
-    if (hero?.photo) { const p = path.join(__dirname, '..', 'public', hero.photo); if (fs.existsSync(p)) fs.unlinkSync(p); }
+    if (hero?.photo) {
+      const p = urlToFsPath(hero.photo);
+      if (p && fs.existsSync(p)) fs.unlinkSync(p);
+    }
     req.db.run('DELETE FROM awards WHERE hero_id = ?', [id]);
     req.db.run('DELETE FROM gallery WHERE hero_id = ?', [id]);
     req.db.run('DELETE FROM media WHERE hero_id = ?', [id]);
@@ -164,8 +178,8 @@ router.delete('/gallery/:id', requireAuth, (req, res) => {
   try {
     const photo = req.db.get('SELECT filename FROM gallery WHERE id = ?', [parseInt(req.params.id)]);
     if (photo) {
-      const p = path.join(__dirname, '..', 'public', photo.filename);
-      if (fs.existsSync(p)) fs.unlinkSync(p);
+      const p = urlToFsPath(photo.filename);
+      if (p && fs.existsSync(p)) fs.unlinkSync(p);
       req.db.run('DELETE FROM gallery WHERE id = ?', [parseInt(req.params.id)]);
     }
     res.json({ success: true });
@@ -188,8 +202,8 @@ router.delete('/media/:id', requireAuth, (req, res) => {
   try {
     const media = req.db.get('SELECT filename FROM media WHERE id = ?', [parseInt(req.params.id)]);
     if (media) {
-      const p = path.join(__dirname, '..', 'public', media.filename);
-      if (fs.existsSync(p)) fs.unlinkSync(p);
+      const p = urlToFsPath(media.filename);
+      if (p && fs.existsSync(p)) fs.unlinkSync(p);
       req.db.run('DELETE FROM media WHERE id = ?', [parseInt(req.params.id)]);
     }
     res.json({ success: true });

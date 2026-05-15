@@ -27,6 +27,6 @@
     "prettier": "^3.3.3",
     "supertest": "^7.0.0"
   },
-  "engines": { "node": ">=18" },
+  "engines": { "node": "20.x" },
   "jest": { "testEnvironment": "node", "testTimeout": 10000 }
 }

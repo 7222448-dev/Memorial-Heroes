@@ -5,15 +5,12 @@
 //  • Synchronous = NORMAL: швидко й безпечно для одно-процесного сервера
 //  • API-обгортка all/get/run/exec залишається сумісною з попереднім кодом
 const path = require('path');
-const fs = require('fs');
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
-
-const DB_PATH = path.join(__dirname, 'memorial.db');
+const { DB_PATH } = require('./paths');
 
 async function initDatabase() {
-  // Переконуємось, що папка існує (важливо для першого запуску)
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+  // Директорії під DB вже створив paths.js
 
   const db = new Database(DB_PATH);
 

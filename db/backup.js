@@ -10,8 +10,8 @@
 // Використовує API better-sqlite3 .backup() — атомарний копір без блокування записів.
 const fs = require('fs');
 const path = require('path');
+const { BACKUP_DIR } = require('./paths');
 
-const BACKUP_DIR = path.join(__dirname, 'backups');
 const KEEP_COUNT = parseInt(process.env.BACKUP_KEEP || '14', 10);
 const INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 години
 const INITIAL_DELAY_MS = 60 * 1000;       // 1 хвилина після старту
