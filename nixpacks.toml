@@ -1,0 +1,16 @@
+# nixpacks.toml — явне закріплення версії Node.
+# Nixpacks ігнорує .nvmrc та engines у деяких випадках,
+# а цей файл читається завжди і має найвищий пріоритет.
+#
+# Чому Node 20: better-sqlite3 має готові бінарники для Node 20 LTS.
+# На Node 24 npm намагається компілювати з C++ source, що потребує Python +
+# build-essential, яких у Nixpacks-образі немає.
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm-9_x"]
+
+[phases.install]
+cmds = ["npm install --omit=dev"]
+
+[start]
+cmd = "npm start"
