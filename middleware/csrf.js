@@ -14,11 +14,7 @@ const secret = process.env.CSRF_SECRET
   || process.env.SESSION_SECRET
   || 'memorial-csrf-fallback-change-me';
 
-const {
-  generateCsrfToken,
-  doubleCsrfProtection,
-  invalidCsrfTokenError,
-} = doubleCsrf({
+const helpers = doubleCsrf({
   getSecret: () => secret,
   getSessionIdentifier: (req) => req.sessionID || req.ip || 'anon',
   cookieName: process.env.NODE_ENV === 'production' ? '__Host-csrf' : 'memorial.csrf',
@@ -33,6 +29,19 @@ const {
     || req.body?._csrf
     || req.query?._csrf,
 });
+
+// У csrf-csrf функцію генерації токену перейменовували між версіями:
+//   v2/v3 — generateToken(req, res)
+//   v4+   — generateCsrfToken(req, res)
+// Беремо те, що є, щоб код працював на будь-якій 2.x/3.x/4.x/5.x.
+const generateCsrfToken = helpers.generateCsrfToken || helpers.generateToken;
+const { doubleCsrfProtection, invalidCsrfTokenError } = helpers;
+
+if (typeof generateCsrfToken !== 'function') {
+  throw new Error(
+    'csrf-csrf: не знайдено generateCsrfToken/generateToken. Перевірте версію пакету.'
+  );
+}
 
 module.exports = {
   generateCsrfToken,
