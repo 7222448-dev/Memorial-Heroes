@@ -394,13 +394,20 @@ tr:hover td{background:rgba(201,168,76,.02)}
 // На кожен мутаційний запит до /admin/* прикладаємо x-csrf-token.
 // Токен видається бекендом разом з cookie; зіставлення відбувається на сервері.
 let csrfToken = null;
-async function refreshCsrfToken() {
-  try {
-    const r = await fetch('/admin/csrf-token', { credentials: 'same-origin' });
-    if (!r.ok) return;
-    const data = await r.json();
-    csrfToken = data.csrfToken;
-  } catch (e) { /* ignore */ }
+// Promise, що резолвиться коли отримано перший токен. Це гарантує, що жоден
+// мутаційний запит не піде з пустим токеном (інакше — миттєвий 403).
+let csrfReady = null;
+
+function refreshCsrfToken() {
+  csrfReady = (async () => {
+    try {
+      const r = await fetch('/admin/csrf-token', { credentials: 'same-origin', cache: 'no-store' });
+      if (!r.ok) return;
+      const data = await r.json();
+      csrfToken = data.csrfToken;
+    } catch (e) { /* ignore — спробуємо ще раз при помилці запиту */ }
+  })();
+  return csrfReady;
 }
 
 // Перехоплення fetch: для мутацій на /admin/* додаємо заголовок з токеном.
@@ -414,6 +421,8 @@ window.fetch = async function(input, init = {}) {
   const doFetch = async () => {
     const opts = { credentials: 'same-origin', ...init };
     if (needsCsrf) {
+      // Чекаємо, поки буде готовий перший токен (важливо для перших запитів після завантаження)
+      if (!csrfToken) await csrfReady;
       opts.headers = { ...(opts.headers || {}), 'x-csrf-token': csrfToken || '' };
     }
     return _origFetch(input, opts);

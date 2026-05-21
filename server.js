@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const SqliteStore = require('better-sqlite3-session-store')(session);
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const { initDatabase } = require('./db/init');
@@ -26,11 +27,23 @@ async function start() {
   // локально — public/uploads. Те саме URL у обох випадках.
   app.use('/uploads', express.static(UPLOADS_DIR));
 
+  // Сесії зберігаємо у тій же SQLite-БД, що й героїв.
+  // Це:
+  //  1) Прибирає production-warning від MemoryStore
+  //  2) Сесії переживають redeploy/перезапуск (на Railway з Volume — взагалі завжди)
+  //  3) Працює стабільно навіть якщо Railway запускає декілька процесів
   app.use(session({
     name: 'memorial.sid',
     secret: process.env.SESSION_SECRET || 'memorial-heroes-ua-secret-change-me',
     resave: false,
     saveUninitialized: false,
+    store: new SqliteStore({
+      client: db._raw,            // той самий better-sqlite3 instance
+      expired: {
+        clear: true,
+        intervalMs: 15 * 60 * 1000, // прибирати протухлі сесії раз на 15 хв
+      },
+    }),
     cookie: {
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
@@ -42,9 +55,17 @@ async function start() {
   app.use((req, res, next) => { req.db = db; next(); });
 
   // ─── Публічна точка для отримання CSRF-токену (потрібна адмін-фронту) ─
-  app.get('/admin/csrf-token', (req, res) => {
-    const token = generateCsrfToken(req, res);
-    res.json({ csrfToken: token });
+  // ВАЖЛИВО: csrf-csrf прив'язує токен до req.sessionID. Якщо нічого не записати
+  // в сесію — з saveUninitialized:false вона не збережеться, sessionID не зафіксується
+  // в cookie, і на наступному запиті буде новий ID → CSRF-токен стане невалідним
+  // ("Сесія минула. Оновіть сторінку."). Тому форсимо збереження сесії.
+  app.get('/admin/csrf-token', (req, res, next) => {
+    req.session.csrfInit = true;
+    req.session.save((err) => {
+      if (err) return next(err);
+      const token = generateCsrfToken(req, res);
+      res.json({ csrfToken: token });
+    });
   });
 
   // ─── Маршрути ─────────────────────────────────────────────────
