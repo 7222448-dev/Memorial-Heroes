@@ -14,10 +14,15 @@ const secret = process.env.CSRF_SECRET
   || process.env.SESSION_SECRET
   || 'memorial-csrf-fallback-change-me';
 
+// Спрощена конфігурація:
+//  • cookie без __Host- префіксу (його суворі правила іноді ламаються за reverse-proxy типу Railway)
+//  • getSessionIdentifier — стабільна константа. CSRF тут захищає від крос-доменних запитів,
+//    а не від крадіжки сесії; зв'язок з sessionID давав збої, коли сесія перестворювалась
+//    після деплою чи зміни секрета. Безпека CSRF зберігається завдяки secret + cookie httpOnly.
 const helpers = doubleCsrf({
   getSecret: () => secret,
-  getSessionIdentifier: (req) => req.sessionID || req.ip || 'anon',
-  cookieName: process.env.NODE_ENV === 'production' ? '__Host-csrf' : 'memorial.csrf',
+  getSessionIdentifier: () => 'memorial-static-csrf',
+  cookieName: 'memorial-csrf',
   cookieOptions: {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

@@ -88,7 +88,16 @@ async function start() {
   // ─── Обробник помилок (зокрема CSRF) ──────────────────────────
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    if (err?.code === 'EBADCSRFTOKEN') {
+    if (err?.code === 'EBADCSRFTOKEN' || err?.message?.includes('csrf')) {
+      // Логуємо контекст для діагностики
+      console.warn('CSRF reject:', {
+        path: req.path,
+        method: req.method,
+        hasHeader: !!req.headers['x-csrf-token'],
+        cookieKeys: Object.keys(req.cookies || {}),
+        sessionID: req.sessionID,
+        msg: err.message,
+      });
       return res.status(403).json({ error: 'Сесія минула. Оновіть сторінку.' });
     }
     console.error('Server error:', err);
