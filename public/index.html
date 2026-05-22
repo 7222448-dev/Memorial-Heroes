@@ -543,6 +543,39 @@ body {
 }
 
 .profile-section .story p { margin-bottom: 1rem; }
+.profile-section .story h1,
+.profile-section .story h2,
+.profile-section .story h3 {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-weight: 400;
+  margin: 1.2rem 0 .6rem;
+}
+.profile-section .story h1 { font-size: 1.5rem; }
+.profile-section .story h2 { font-size: 1.3rem; }
+.profile-section .story h3 { font-size: 1.15rem; }
+.profile-section .story ul,
+.profile-section .story ol { padding-left: 1.6rem; margin-bottom: 1rem; }
+.profile-section .story li { margin-bottom: .35rem; }
+.profile-section .story blockquote {
+  border-left: 3px solid var(--gold-dim);
+  padding: .3rem 1rem;
+  margin: 1rem 0;
+  color: var(--text);
+  font-style: italic;
+}
+.profile-section .story a { color: var(--gold); text-decoration: underline; }
+.profile-section .story strong, .profile-section .story b { color: var(--text); font-weight: 600; }
+
+/* Класи з Quill — щоб вирівнювання та шрифти зберігались */
+.profile-section .story .ql-align-center { text-align: center; }
+.profile-section .story .ql-align-right  { text-align: right; }
+.profile-section .story .ql-align-justify{ text-align: justify; }
+.profile-section .story .ql-font-serif    { font-family: 'Cormorant Garamond', Georgia, serif; }
+.profile-section .story .ql-font-monospace{ font-family: ui-monospace, Menlo, Consolas, monospace; }
+.profile-section .story .ql-size-small { font-size: .82rem; }
+.profile-section .story .ql-size-large { font-size: 1.15rem; }
+.profile-section .story .ql-size-huge  { font-size: 1.45rem; }
 
 /* Photo gallery in profile */
 .profile-gallery {

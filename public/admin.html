@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Адмін-панель — Книга Пам'яті</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Quill — WYSIWYG-редактор для поля "Історія" -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0a0a0c;--card:#141418;--surface:#1a1a20;--gold:#c9a84c;--gold-dim:#8a7233;--gold-glow:rgba(201,168,76,.15);--text:#e8e4dc;--muted:#9a958a;--dim:#5a5650;--border:rgba(201,168,76,.12);--danger:#e24b4a;--success:#5dca7a}
@@ -99,6 +101,50 @@ tr:hover td{background:rgba(201,168,76,.02)}
   .stats{grid-template-columns:repeat(2,1fr)}
   .header{flex-direction:column;gap:.8rem;text-align:center}
 }
+
+/* ═══ Quill (WYSIWYG для "Історія") — темна тема в стилі сайту ═══ */
+.ql-toolbar.ql-snow{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px 10px 0 0;
+  border-bottom:none;
+}
+.ql-container.ql-snow{
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border);
+  border-radius:0 0 10px 10px;
+  color:var(--text);
+  font-family:'Montserrat',sans-serif;
+  font-size:.95rem;
+  min-height:260px;
+}
+.ql-editor{min-height:260px;line-height:1.7}
+.ql-editor.ql-blank::before{color:var(--dim);font-style:normal}
+/* Кнопки тулбару — золоті іконки на темному */
+.ql-snow .ql-stroke{stroke:var(--muted)}
+.ql-snow .ql-fill{fill:var(--muted)}
+.ql-snow .ql-picker-label{color:var(--muted)}
+.ql-snow .ql-picker-label:hover,
+.ql-snow button:hover .ql-stroke,
+.ql-snow button.ql-active .ql-stroke,
+.ql-snow .ql-picker-label.ql-active{stroke:var(--gold)}
+.ql-snow button:hover .ql-fill,
+.ql-snow button.ql-active .ql-fill,
+.ql-snow .ql-picker-label.ql-active .ql-fill{fill:var(--gold)}
+.ql-snow .ql-picker-label:hover,
+.ql-snow .ql-picker-label.ql-active{color:var(--gold)}
+/* Випадні меню (Headings, Font, Color) — у тон інших полів */
+.ql-snow .ql-picker-options{
+  background:var(--card);
+  border:1px solid var(--border);
+  color:var(--text);
+}
+.ql-snow .ql-picker-item{color:var(--text)}
+.ql-snow .ql-picker-item:hover{color:var(--gold)}
+/* Посилання в тексті — золоті */
+.ql-editor a{color:var(--gold)}
+.ql-editor blockquote{border-left:3px solid var(--gold-dim);padding-left:1rem;color:var(--muted);margin:.5rem 0}
+.ql-editor h1,.ql-editor h2,.ql-editor h3{color:var(--gold);font-family:'Cormorant Garamond',serif;font-weight:400}
 </style>
 </head>
 <body>
@@ -257,7 +303,9 @@ tr:hover td{background:rgba(201,168,76,.02)}
       <div class="form-row full">
         <div class="form-group">
           <label>Історія</label>
-          <textarea id="heroStory" placeholder="Розкажіть про цю людину... (можна використовувати HTML теги &lt;p&gt;)"></textarea>
+          <!-- Quill монтується сюди. Реальне HTML-значення зберігається у схованому полі heroStory -->
+          <div id="heroStoryEditor"></div>
+          <input type="hidden" id="heroStory">
         </div>
       </div>
 
@@ -389,6 +437,9 @@ tr:hover td{background:rgba(201,168,76,.02)}
 
 <div class="toast" id="toast"></div>
 
+<!-- Quill JS — ініціалізація редактора нижче в скрипті -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
 <script>
 // ═══════ CSRF (double-submit cookie) ═══════
 // На кожен мутаційний запит до /admin/* прикладаємо x-csrf-token.
@@ -438,6 +489,62 @@ window.fetch = async function(input, init = {}) {
 
 // Беремо токен одразу при завантаженні сторінки
 refreshCsrfToken();
+
+// ═══════ QUILL — редактор поля "Історія" ═══════
+// Запускаємо одразу: модалка просто прихована, але DOM вже існує.
+// Тулбар — як у Word: шрифт, розмір, жирний/курсив/підкреслення/закреслено,
+// колір тексту/фону, заголовки, списки, цитати, вирівнювання, посилання, відкат.
+let storyEditor = null;
+function initStoryEditor() {
+  if (storyEditor || !window.Quill) return;
+  // Дозволяємо вибір шрифту/розміру/виділення
+  const Font = Quill.import('formats/font');
+  Font.whitelist = ['sans', 'serif', 'mono'];
+  Quill.register(Font, true);
+
+  storyEditor = new Quill('#heroStoryEditor', {
+    theme: 'snow',
+    placeholder: 'Розкажіть про цю людину…',
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        [{ font: ['sans', 'serif', 'mono'] }],
+        [{ size: ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ color: [] }, { background: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ align: [] }],
+        ['blockquote', 'link'],
+        ['clean'],
+      ],
+    },
+  });
+}
+
+// Прочитати HTML з редактора. Якщо текст порожній — повертаємо '',
+// щоб у БД не лежав сміттєвий "<p><br></p>".
+function getStoryHtml() {
+  if (!storyEditor) return document.getElementById('heroStory').value || '';
+  const text = storyEditor.getText().trim();
+  if (!text) return '';
+  return storyEditor.root.innerHTML;
+}
+
+// Записати HTML в редактор (при відкритті форми редагування).
+function setStoryHtml(html) {
+  if (!storyEditor) {
+    document.getElementById('heroStory').value = html || '';
+    return;
+  }
+  // Quill 2: безпечніше використовувати clipboard.dangerouslyPasteHTML
+  // (звучить страшно, насправді це штатний спосіб вставки готового HTML;
+  // санітизація відбувається на бекенді при збереженні).
+  storyEditor.setContents([]);
+  if (html) storyEditor.clipboard.dangerouslyPasteHTML(html);
+}
+
+// Ініціалізуємо редактор після завантаження DOM
+document.addEventListener('DOMContentLoaded', initStoryEditor);
 
 let currentAwards = [];
 let editingHeroId = null;
@@ -525,7 +632,7 @@ function openHeroModal(hero = null) {
   document.getElementById('heroBorn').value = hero ? (hero.born || '') : '';
   document.getElementById('heroFallen').value = hero ? (hero.fallen || '') : '';
   document.getElementById('heroCity').value = hero ? (hero.city || '') : '';
-  document.getElementById('heroStory').value = hero ? (hero.story || '') : '';
+  setStoryHtml(hero ? (hero.story || '') : '');
 
   // Photo preview
   const wrap = document.getElementById('photoPreviewWrap');
@@ -679,7 +786,7 @@ document.getElementById('heroForm').addEventListener('submit', async (e) => {
   formData.append('born', document.getElementById('heroBorn').value);
   formData.append('fallen', document.getElementById('heroFallen').value);
   formData.append('city', document.getElementById('heroCity').value);
-  formData.append('story', document.getElementById('heroStory').value);
+  formData.append('story', getStoryHtml());
   formData.append('awards', JSON.stringify(currentAwards));
 
   const photoFile = document.getElementById('photoInput').files[0];

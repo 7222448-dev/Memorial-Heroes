@@ -6,6 +6,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const { UPLOADS_DIR } = require('../db/paths');
+const { sanitizeStoryHtml } = require('../utils/sanitize');
 
 // Перетворити URL-шлях типу "/uploads/photos/abc.jpg" на реальний шлях на диску.
 // У БД ми зберігаємо саме URL-шлях, бо він однаковий і для віддачі express.static,
@@ -110,9 +111,10 @@ router.post('/heroes', requireAuth, upload.single('photo'), (req, res) => {
   try {
     const { name, callsign, rank, born, fallen, unit, brigade, battalion, company, city, story, awards } = req.body;
     const photo = req.file ? `/uploads/photos/${req.file.filename}` : null;
+    const safeStory = sanitizeStoryHtml(story);
     const result = req.db.run(
       'INSERT INTO heroes (name, callsign, rank, born, fallen, unit, brigade, battalion, company, city, story, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, callsign || null, rank || null, born || null, fallen || null, unit || null, brigade || null, battalion || null, company || null, city || null, story || null, photo]
+      [name, callsign || null, rank || null, born || null, fallen || null, unit || null, brigade || null, battalion || null, company || null, city || null, safeStory || null, photo]
     );
     const heroId = result.lastInsertRowid;
     if (awards) {
@@ -129,9 +131,10 @@ router.put('/heroes/:id', requireAuth, upload.single('photo'), (req, res) => {
     const hero = req.db.get('SELECT * FROM heroes WHERE id = ?', [id]);
     if (!hero) return res.status(404).json({ error: 'Не знайдено' });
     const photo = req.file ? `/uploads/photos/${req.file.filename}` : hero.photo;
+    const safeStory = sanitizeStoryHtml(story);
     req.db.run(
       'UPDATE heroes SET name=?, callsign=?, rank=?, born=?, fallen=?, unit=?, brigade=?, battalion=?, company=?, city=?, story=?, photo=?, updated_at=CURRENT_TIMESTAMP WHERE id=?',
-      [name, callsign || null, rank || null, born || null, fallen || null, unit || null, brigade || null, battalion || null, company || null, city || null, story || null, photo, id]
+      [name, callsign || null, rank || null, born || null, fallen || null, unit || null, brigade || null, battalion || null, company || null, city || null, safeStory || null, photo, id]
     );
     if (awards) {
       req.db.run('DELETE FROM awards WHERE hero_id = ?', [id]);
@@ -275,7 +278,7 @@ router.post('/import', requireAuth, csvUpload.single('file'), (req, res) => {
             r.name, r.callsign || null, r.rank || null, r.born || null,
             r.fallen || null, r.unit || null, r.brigade || null,
             r.battalion || null, r.company || null, r.city || null,
-            r.story || null, parseInt(r.candles) || 0
+            sanitizeStoryHtml(r.story) || null, parseInt(r.candles) || 0
           ]
         );
 
