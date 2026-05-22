@@ -189,6 +189,28 @@ router.delete('/gallery/:id', requireAuth, (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Помилка' }); }
 });
 
+// Збереження нового порядку фото героя.
+// body: { order: [id1, id2, id3, ...] } — id у тому порядку, в якому вони мають відображатись.
+// Оновлюємо sort_order = індекс у масиві. Все в одній транзакції для атомарності.
+router.put('/heroes/:id/gallery/reorder', requireAuth, (req, res) => {
+  try {
+    const heroId = parseInt(req.params.id);
+    const order = Array.isArray(req.body?.order) ? req.body.order : [];
+    if (!order.length) return res.json({ success: true, updated: 0 });
+
+    const txn = req.db._raw.transaction((ids) => {
+      const upd = req.db._raw.prepare('UPDATE gallery SET sort_order = ? WHERE id = ? AND hero_id = ?');
+      ids.forEach((photoId, idx) => upd.run(idx, parseInt(photoId), heroId));
+    });
+    txn(order);
+
+    res.json({ success: true, updated: order.length });
+  } catch (err) {
+    console.error('gallery reorder:', err);
+    res.status(500).json({ error: 'Не вдалось зберегти порядок' });
+  }
+});
+
 // ═══ МЕДІА ═══
 router.post('/heroes/:id/media', requireAuth, upload.single('file'), (req, res) => {
   try {

@@ -84,7 +84,13 @@ tr:hover td{background:rgba(201,168,76,.02)}
 .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.5rem;margin-top:.5rem}
 .gallery-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
 .gallery-item img{width:100%;height:100%;object-fit:cover}
-.gallery-item .remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.gallery-item .remove{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+.gallery-item{cursor:grab}
+.gallery-item:active{cursor:grabbing}
+.gallery-item .order-badge{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.65);color:var(--gold);font-size:.7rem;padding:2px 6px;border-radius:6px;font-family:Montserrat,sans-serif;pointer-events:none}
+.gallery-item.sortable-ghost{opacity:.35}
+.gallery-item.sortable-chosen{box-shadow:0 0 0 2px var(--gold)}
+.gallery-hint{font-size:.75rem;color:var(--muted);margin-top:.4rem}
 
 /* Media list */
 .media-list-admin{display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem}
@@ -316,6 +322,7 @@ tr:hover td{background:rgba(201,168,76,.02)}
             <label>Галерея фото</label>
             <input type="file" id="galleryInput" accept="image/*" multiple style="display:none" onchange="uploadGallery(this)">
             <button type="button" class="btn btn-sm" onclick="document.getElementById('galleryInput').click()">+ Додати фото</button>
+            <div class="gallery-hint">Перетягуйте фото, щоб змінити порядок. Цифра в куті — позиція.</div>
             <div class="gallery-grid" id="galleryGrid"></div>
           </div>
         </div>
@@ -439,6 +446,8 @@ tr:hover td{background:rgba(201,168,76,.02)}
 
 <!-- Quill JS — ініціалізація редактора нижче в скрипті -->
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<!-- SortableJS — drag-and-drop для галереї -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
 <script>
 // ═══════ CSRF (double-submit cookie) ═══════
@@ -703,46 +712,95 @@ function renderAwards() {
 }
 
 // ═══════ GALLERY ═══════
+// Sortable instance — створюємо один раз і перевикористовуємо
+let gallerySortable = null;
+
 function renderGallery(photos) {
   const grid = document.getElementById('galleryGrid');
-  grid.innerHTML = (photos || []).map(p => `
-    <div class="gallery-item">
-      <img src="${p.filename}" alt="">
-      <button class="remove" onclick="deleteGalleryPhoto(${p.id})">&times;</button>
+  // ВАЖЛИВО: type="button" — інакше клік сабмітить форму героя і модалка закривається ("викидує на попередню сторінку")
+  grid.innerHTML = (photos || []).map((p, idx) => `
+    <div class="gallery-item" data-id="${p.id}">
+      <img src="${p.filename}" alt="" draggable="false">
+      <span class="order-badge">${idx + 1}</span>
+      <button type="button" class="remove" onclick="deleteGalleryPhoto(event, ${p.id})" title="Видалити">&times;</button>
     </div>
   `).join('');
+
+  // Ініціалізуємо drag-and-drop (лише один раз, далі sortable сам стежить за DOM)
+  if (!gallerySortable && window.Sortable) {
+    gallerySortable = Sortable.create(grid, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      // Тягнути за саме фото, але не за кнопку видалення
+      filter: '.remove',
+      preventOnFilter: false,
+      onEnd: saveGalleryOrder,
+    });
+  }
+}
+
+async function saveGalleryOrder() {
+  if (!editingHeroId) return;
+  const grid = document.getElementById('galleryGrid');
+  const order = Array.from(grid.querySelectorAll('.gallery-item')).map(el => parseInt(el.dataset.id));
+  // Оновлюємо номерки одразу, щоб не чекати відповіді сервера
+  grid.querySelectorAll('.order-badge').forEach((b, i) => b.textContent = i + 1);
+  try {
+    const res = await fetch(`/admin/heroes/${editingHeroId}/gallery/reorder`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order }),
+    });
+    if (!res.ok) throw new Error('reorder failed');
+    showToast('Порядок збережено');
+  } catch (e) {
+    showToast('Не вдалось зберегти порядок', true);
+  }
 }
 
 async function uploadGallery(input) {
   if (!editingHeroId || !input.files.length) return;
   const formData = new FormData();
   for (const f of input.files) formData.append('photos', f);
-  
+
   const res = await fetch(`/admin/heroes/${editingHeroId}/gallery`, { method: 'POST', body: formData });
   if (res.ok) {
     showToast('Фото завантажено');
     const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
     renderGallery(hero.gallery);
+  } else {
+    showToast('Помилка завантаження', true);
   }
   input.value = '';
 }
 
-async function deleteGalleryPhoto(id) {
-  await fetch(`/admin/gallery/${id}`, { method: 'DELETE' });
-  const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
-  renderGallery(hero.gallery);
+// e.preventDefault() — на випадок, якщо браузер чомусь спробує обробити це як submit
+async function deleteGalleryPhoto(e, id) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  if (!confirm('Видалити це фото?')) return;
+  try {
+    const res = await fetch(`/admin/gallery/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('delete failed');
+    const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
+    renderGallery(hero.gallery);
+    showToast('Фото видалено');
+  } catch (err) {
+    showToast('Не вдалось видалити фото', true);
+  }
 }
 
 // ═══════ MEDIA ═══════
 function renderMedia(mediaItems) {
   const list = document.getElementById('mediaList');
+  // type="button" — щоб клік не сабмітив форму героя
   list.innerHTML = (mediaItems || []).map(m => `
     <div class="media-item-admin">
       <div class="media-icon">${m.type === 'audio' ? '♪' : '▶'}</div>
       <div class="media-info">
         ${m.title || 'Без назви'} <br><span>${m.type === 'audio' ? 'Аудіо' : 'Відео'}${m.duration ? ' · ' + m.duration : ''}</span>
       </div>
-      <button class="btn btn-sm btn-danger" onclick="deleteMedia(${m.id})">✕</button>
+      <button type="button" class="btn btn-sm btn-danger" onclick="deleteMedia(event, ${m.id})">✕</button>
     </div>
   `).join('');
 }
@@ -765,10 +823,18 @@ async function uploadMedia(input) {
   input.value = '';
 }
 
-async function deleteMedia(id) {
-  await fetch(`/admin/media/${id}`, { method: 'DELETE' });
-  const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
-  renderMedia(hero.media);
+async function deleteMedia(e, id) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  if (!confirm('Видалити цей запис?')) return;
+  try {
+    const res = await fetch(`/admin/media/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('delete failed');
+    const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
+    renderMedia(hero.media);
+    showToast('Запис видалено');
+  } catch (err) {
+    showToast('Не вдалось видалити', true);
+  }
 }
 
 // ═══════ SAVE HERO ═══════
