@@ -764,15 +764,30 @@ async function uploadGallery(input) {
   const formData = new FormData();
   for (const f of input.files) formData.append('photos', f);
 
-  const res = await fetch(`/admin/heroes/${editingHeroId}/gallery`, { method: 'POST', body: formData });
-  if (res.ok) {
+  try {
+    const res = await fetch(`/admin/heroes/${editingHeroId}/gallery`, { method: 'POST', body: formData });
+    if (!res.ok) {
+      // Намагаємось витягти текст помилки з відповіді
+      let msg = `HTTP ${res.status}`;
+      try {
+        const data = await res.json();
+        if (data?.error) msg = data.error;
+      } catch (_) {
+        try { msg = (await res.text()) || msg; } catch (_) { /* noop */ }
+      }
+      console.error('Upload failed:', res.status, msg);
+      showToast(`Помилка завантаження: ${msg}`, true);
+      return;
+    }
     showToast('Фото завантажено');
     const hero = await (await fetch(`/admin/heroes/${editingHeroId}`)).json();
     renderGallery(hero.gallery);
-  } else {
-    showToast('Помилка завантаження', true);
+  } catch (err) {
+    console.error('Upload exception:', err);
+    showToast(`Помилка завантаження: ${err.message || err}`, true);
+  } finally {
+    input.value = '';
   }
-  input.value = '';
 }
 
 // e.preventDefault() — на випадок, якщо браузер чомусь спробує обробити це як submit
